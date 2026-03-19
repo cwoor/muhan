@@ -179,14 +179,12 @@ input[type=checkbox]{width:18px;height:18px;accent-color:var(--buy);cursor:point
 </div>
 <div class="toast" id="toast"></div>
 
-<!-- ===================== ✏️ 입력 탭 ===================== -->
 <div class="pg active" id="pg-input">
   <div class="hdr">
     <div><h1>✏️ <span>오늘 입력</span></h1><p>매일 여기만 사용하면 끝!</p></div>
     <div style="font-family:var(--fm);font-size:13px;color:var(--dim);" id="inputDateDisp"></div>
   </div>
 
-  <!-- 날짜 -->
   <div class="card" style="margin-bottom:12px;display:flex;align-items:center;gap:14px;">
     <div style="flex:1;">
       <div class="cl">📅 오늘 날짜</div>
@@ -195,7 +193,6 @@ input[type=checkbox]{width:18px;height:18px;accent-color:var(--buy);cursor:point
     <button class="btn bs bsm" onclick="setToday()">오늘</button>
   </div>
 
-  <!-- 이어받기 배너 -->
   <div class="carry" id="carryBanner">
     <div style="display:flex;justify-content:space-between;align-items:center;">
       <div>
@@ -206,7 +203,6 @@ input[type=checkbox]{width:18px;height:18px;accent-color:var(--buy);cursor:point
     </div>
   </div>
 
-  <!-- ☀️ 아침 -->
   <div class="sec">
     <span class="sec-icon">☀️</span>
     <span class="sec-title">아침 — 장 시작 전</span>
@@ -221,7 +217,6 @@ input[type=checkbox]{width:18px;height:18px;accent-color:var(--buy);cursor:point
       oninput="calcAll()">
   </div>
 
-  <!-- 아침 결과 미리보기 -->
   <div class="cp" style="margin-bottom:8px;" id="morningPreview">
     <div class="cr"><span class="cn">⭐ 별지점</span><span class="cv2" id="pv_star" style="color:var(--gold);">—</span></div>
     <div class="cr"><span class="cn">🛒 1회 매수금</span><span class="cv2" id="pv_buy" style="color:var(--buy);">—</span></div>
@@ -229,7 +224,6 @@ input[type=checkbox]{width:18px;height:18px;accent-color:var(--buy);cursor:point
     <div class="cr" style="border:none;"><span class="cn" style="font-size:12px;color:var(--muted);">📊 주문표는 현황 탭에서 확인</span><button class="btn bblue bsm" onclick="sw('dashboard')">현황 보기 →</button></div>
   </div>
 
-  <!-- 체크리스트 -->
   <div class="lbl">✅ 체크리스트</div>
   <div class="card" style="margin-bottom:8px;">
     <div class="ckrow"><input type="checkbox" id="c1"> 별지점 확인 완료 (현황 탭)</div>
@@ -239,7 +233,6 @@ input[type=checkbox]{width:18px;height:18px;accent-color:var(--buy);cursor:point
     <div class="ckrow"><input type="checkbox" id="c5"> 주간장 주문 없음 확인</div>
   </div>
 
-  <!-- 🌙 저녁 -->
   <div class="sec" style="margin-top:24px;">
     <span class="sec-icon">🌙</span>
     <span class="sec-title">저녁 — 장 마감 후</span>
@@ -255,13 +248,11 @@ input[type=checkbox]{width:18px;height:18px;accent-color:var(--buy);cursor:point
     <div id="tCalcRows"></div>
     <button class="btn bs bsm" onclick="addTRow()" style="width:100%;margin-top:8px;border-color:#2a2a6a;color:#9090ff;">+ 체결 행 추가</button>
 
-    <!-- 쿼터매도 -->
     <div style="display:flex;align-items:center;gap:12px;margin-top:12px;padding:12px;background:var(--sf);border-radius:10px;">
       <input type="checkbox" id="qSellDone" onchange="calcTInc()" style="width:18px;height:18px;accent-color:var(--pink);">
       <span style="font-size:14px;color:var(--dim);">쿼터매도 체결됨 → T × 0.75 적용</span>
     </div>
 
-    <!-- 계산 결과 -->
     <div style="background:#0a1520;border:1px solid #1a3040;border-radius:10px;padding:14px;margin-top:12px;">
       <div class="cr"><span class="cn">총 체결금액</span><span class="cv2" id="totalAmt" style="color:var(--buy);">$0.00</span></div>
       <div class="cr"><span class="cn">체결 총 주수</span><span class="cv2" id="totalShares" style="color:var(--buy);">0주</span></div>
@@ -271,7 +262,6 @@ input[type=checkbox]{width:18px;height:18px;accent-color:var(--buy);cursor:point
       <div class="cr" style="border:none;"><span class="cn" style="color:var(--pink);">쿼터매도 후 T값</span><span class="cv2" id="afterQT" style="color:var(--pink);">—</span></div>
     </div>
 
-    <!-- 내일 T값 -->
     <div class="nextt">
       <div class="nextt-lbl">내일 T값</div>
       <div class="nextt-val" id="nextT">—</div>
@@ -282,7 +272,6 @@ input[type=checkbox]{width:18px;height:18px;accent-color:var(--buy);cursor:point
     </button>
   </div>
 
-  <!-- 기타 -->
   <div class="g2" style="margin-bottom:12px;">
     <div style="background:var(--sf);border:1px solid var(--bd);border-radius:12px;padding:14px;">
       <div class="cl">종가 ($)</div>
@@ -299,21 +288,18 @@ input[type=checkbox]{width:18px;height:18px;accent-color:var(--buy);cursor:point
   <textarea style="background:var(--sf);border:1px solid var(--bd);border-radius:12px;padding:14px;width:100%;min-height:75px;color:var(--text);font-family:var(--fb);font-size:14px;resize:vertical;outline:none;" id="notes" placeholder="특이사항, 시장 상황, 느낀점..."></textarea>
 </div>
 
-<!-- SAVE BAR -->
 <div class="savebar">
   <span class="ss" id="saveStatus">저장되지 않음</span>
-  <button class="btn bs bsm" onclick="loadToday()">↩ 불러오기</button>
-  <button class="btn bp" onclick="saveToday()">💾 저장</button>
+  <button class="btn bs bsm" onclick="syncFromCloud()">🔄 서버 동기화</button>
+  <button class="btn bp" onclick="saveToday()">💾 저장 및 서버 전송</button>
 </div>
 
-<!-- ===================== 📊 현황 탭 ===================== -->
 <div class="pg" id="pg-dashboard">
   <div class="hdr">
     <div><h1>📊 <span>오늘 현황</span></h1><p id="dashDateDisp">자동 계산 결과</p></div>
     <button class="btn bs bsm" onclick="calcAll();toast('🔄 새로고침!')">🔄</button>
   </div>
 
-  <!-- 핵심 지표 -->
   <div class="g2" style="margin-bottom:12px;">
     <div class="card" style="background:#0d1a30;border-color:#1a4060;">
       <div class="cl" style="color:var(--blue);">⭐ 별지점</div>
@@ -338,7 +324,6 @@ input[type=checkbox]{width:18px;height:18px;accent-color:var(--buy);cursor:point
     <div class="card"><div class="cl">🛒 1회 매수금</div><div class="cv" id="d_buyamt" style="color:var(--buy);">—</div></div>
   </div>
 
-  <!-- T값 히스토리 -->
   <div style="margin-bottom:14px;">
     <div style="font-size:11px;color:var(--muted);margin-bottom:6px;font-weight:600;letter-spacing:1px;">T값 히스토리 (최근 5일)</div>
     <div class="t-hist" id="tHist"><span style="color:var(--muted);font-size:12px;">저장 기록 없음</span></div>
@@ -347,7 +332,6 @@ input[type=checkbox]{width:18px;height:18px;accent-color:var(--buy);cursor:point
   <div class="fh" style="margin-bottom:4px;">SOXL 40분할 별%=<span>(20−T)%</span> · 별지점=<span>평단×(1+별%)</span> · 최종매도=<span>평단×1.20</span></div>
   <div class="div"></div>
 
-  <!-- 매수 주문표 -->
   <div class="lbl">📥 매수 주문표 (LOC)</div>
   <div id="modeGuide" class="fh fhb" style="margin-bottom:10px;"></div>
   <div class="card" style="padding:0;overflow:hidden;margin-bottom:4px;">
@@ -357,7 +341,6 @@ input[type=checkbox]{width:18px;height:18px;accent-color:var(--buy);cursor:point
     </table>
   </div>
 
-  <!-- 매도 주문표 -->
   <div class="lbl">📤 매도 주문표 (매일 필수)</div>
   <div class="fh" style="margin-bottom:10px;">전/후반전 <span>공통</span> · 지정가는 <span>프리장 전(서머 5시/비서머 6시)</span></div>
   <div class="card" style="padding:0;overflow:hidden;">
@@ -381,7 +364,6 @@ input[type=checkbox]{width:18px;height:18px;accent-color:var(--buy);cursor:point
   </div>
 </div>
 
-<!-- ===================== 📈 차트 탭 ===================== -->
 <div class="pg" id="pg-chart">
   <div class="hdr">
     <div><h1>📈 <span>차트</span></h1><p>수익률 · T값 · 평단 시각화</p></div>
@@ -402,7 +384,6 @@ input[type=checkbox]{width:18px;height:18px;accent-color:var(--buy);cursor:point
   </div>
 </div>
 
-<!-- ===================== 📚 히스토리 탭 ===================== -->
 <div class="pg" id="pg-history">
   <div class="hdr">
     <div><h1>📚 <span>히스토리</span></h1><p>저장된 모든 날짜 기록</p></div>
@@ -421,7 +402,6 @@ input[type=checkbox]{width:18px;height:18px;accent-color:var(--buy);cursor:point
   <div id="histEmpty" style="text-align:center;padding:50px;color:var(--muted);font-size:15px;display:none;">저장된 기록이 없습니다</div>
 </div>
 
-<!-- ===================== ⚙️ 설정 탭 ===================== -->
 <div class="pg" id="pg-settings">
   <div class="hdr">
     <div><h1>⚙️ <span>설정</span></h1><p>처음 한번만 · 필요할 때 수정</p></div>
@@ -466,7 +446,6 @@ input[type=checkbox]{width:18px;height:18px;accent-color:var(--buy);cursor:point
   </div>
 </div>
 
-<!-- MODAL -->
 <div class="mov" id="modalOv" onclick="closeMo(event)">
   <div class="modal">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
@@ -482,6 +461,7 @@ input[type=checkbox]{width:18px;height:18px;accent-color:var(--buy);cursor:point
 </div>
 
 <script>
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzkQzLIHVuBjT0m5WdzJ7kPnOfsz56LJs3UmPEMUdQefsyLD2hR23HUfoUtI-z_IzXhsQ/exec";
 const SK='muhan_v4';
 let moDate=null, tRowCount=0;
 let chartReturn=null, chartT=null, chartAvg=null;
@@ -495,6 +475,7 @@ window.onload=()=>{
   loadToday();
   calcAll();
   renderStats();
+  syncFromCloud(); // 시작 시 자동 동기화 추가
 };
 
 function setToday(){
@@ -603,7 +584,7 @@ function carryFromPrev(){
 }
 
 // ─── SAVE / LOAD ───
-function saveToday(){
+async function saveToday(){
   const date=document.getElementById('recDate').value;
   if(!date){toast('날짜를 입력해주세요');return;}
   const avg=parseFloat(document.getElementById('avgPrice').value)||0;
@@ -636,12 +617,48 @@ function saveToday(){
     newAvg:newAvgTxt&&newAvgTxt!=='—'?newAvgTxt:null,
     savedAt:new Date().toISOString()
   };
+  
+  // 1. 로컬 저장 (브라우저)
   const recs=getRecs();recs[date]=r;setRecs(recs);
   renderTHist();
   const el=document.getElementById('saveStatus');
-  el.textContent=`✓ 저장됨 (${new Date().toLocaleTimeString('ko-KR')})`;
+  el.textContent=`✓ 로컬 저장됨 (${new Date().toLocaleTimeString('ko-KR')})`;
   el.className='ss ok';
-  toast('💾 저장되었습니다!');
+  toast('💾 로컬 저장되었습니다!');
+
+  // 2. 서버 전송 (구글 시트)
+  el.textContent = "🚀 서버 전송 중...";
+  try {
+    await fetch(WEB_APP_URL, { method: "POST", body: JSON.stringify(r) });
+    el.textContent = `✓ 서버 저장 완료 (${new Date().toLocaleTimeString('ko-KR')})`;
+    toast('💾 서버 저장 완료!');
+  } catch (e) {
+    el.textContent = "❌ 서버 전송 실패 (로컬만 저장됨)";
+    toast('❌ 서버 전송 실패');
+  }
+}
+
+async function syncFromCloud(){
+  const el = document.getElementById('saveStatus');
+  el.textContent = "🔄 서버 동기화 중...";
+  try {
+    const response = await fetch(WEB_APP_URL);
+    const data = await response.json();
+    if(data && data.length > 0) {
+      const recs = getRecs();
+      data.forEach(item => { if(item.date) recs[item.date] = item; });
+      setRecs(recs);
+      renderTHist(); loadToday(); calcAll(); renderStats();
+      el.textContent = `✓ 서버 동기화 완료`;
+      el.className = 'ss ok';
+      toast('🔄 동기화 성공!');
+    } else {
+      el.textContent = "서버에 데이터 없음";
+    }
+  } catch (e) {
+    el.textContent = "❌ 동기화 실패";
+    toast('❌ 서버 연결 실패');
+  }
 }
 
 function loadToday(){
