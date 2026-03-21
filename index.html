@@ -268,7 +268,7 @@ input[type=checkbox]{width:18px;height:18px;accent-color:var(--buy);cursor:point
       <div class="nextt-sub" id="nextTSub"></div>
     </div>
     <button class="btn bp" onclick="applyNextT()" style="width:100%;margin-top:12px;">
-      ✅ 내일 T값·평단·보유주 적용 후 저장
+      ✅ 저녁 기록 저장 (내일 아침에 이어받기 하세요!)
     </button>
   </div>
 
@@ -475,7 +475,7 @@ window.onload=()=>{
   loadToday();
   calcAll();
   renderStats();
-  syncFromCloud(); // 시작 시 자동 동기화 추가
+  syncFromCloud(); // 시작 시 자동 동기화
 };
 
 function setToday(){
@@ -518,17 +518,15 @@ function resetNightSection(){
   document.getElementById('nextT').textContent='—';
   document.getElementById('nextTSub').textContent='';
   ['closePrice','execSell','notes'].forEach(id=>document.getElementById(id).value='');
-  // 적용 버튼 초기화
+  
   const btn=document.querySelector('[onclick="applyNextT()"]');
   if(btn){
-    btn.textContent='✅ 내일 T값·평단·보유주 적용 후 저장';
+    btn.textContent='✅ 저녁 기록 저장 (내일 아침에 이어받기 하세요!)';
     btn.style.background='var(--gold)';
     btn.style.color='#000';
     btn.style.border='none';
     btn.style.cursor='pointer';
   }
-  const rb=document.getElementById('revertBtn');
-  if(rb)rb.remove();
 }
 
 // ─── T값 히스토리 ───
@@ -583,7 +581,7 @@ function carryFromPrev(){
   calcAll(); toast(`📥 ${prev} 데이터 이어받기 완료!`);
 }
 
-// ─── SAVE / LOAD ───
+// ─── 🚀 SAVE / LOAD (버그 수정 완료) ───
 async function saveToday(){
   const date=document.getElementById('recDate').value;
   if(!date){toast('날짜를 입력해주세요');return;}
@@ -598,6 +596,7 @@ async function saveToday(){
   const nextTTxt=document.getElementById('nextT').textContent.replace('T','').trim();
   const newSharesTxt=document.getElementById('newShares').textContent.replace('주','').trim();
   const newAvgTxt=document.getElementById('newAvg').textContent.replace('$','').trim();
+  
   const r={
     date,ticker:tk,splitNum:document.getElementById('splitNum').value,
     principal:document.getElementById('principal').value,
@@ -618,7 +617,7 @@ async function saveToday(){
     savedAt:new Date().toISOString()
   };
   
-  // 1. 로컬 저장 (브라우저)
+  // 1. 로컬 저장
   const recs=getRecs();recs[date]=r;setRecs(recs);
   renderTHist();
   const el=document.getElementById('saveStatus');
@@ -626,18 +625,19 @@ async function saveToday(){
   el.className='ss ok';
   toast('💾 로컬 저장되었습니다!');
 
-  // 2. 서버 전송 (구글 시트)
+  // 2. 서버 전송
   el.textContent = "🚀 서버 전송 중...";
   try {
     await fetch(WEB_APP_URL, { method: "POST", body: JSON.stringify(r) });
     el.textContent = `✓ 서버 저장 완료 (${new Date().toLocaleTimeString('ko-KR')})`;
-    toast('💾 서버 저장 완료!');
+    toast('💾 서버 전송 완료!');
   } catch (e) {
     el.textContent = "❌ 서버 전송 실패 (로컬만 저장됨)";
-    toast('❌ 서버 전송 실패');
+    toast('❌ 서버 연결 실패');
   }
 }
 
+// 🛡️ 좀비 날짜 자르기 완벽 적용
 async function syncFromCloud(){
   const el = document.getElementById('saveStatus');
   el.textContent = "🔄 서버 동기화 중...";
@@ -646,7 +646,14 @@ async function syncFromCloud(){
     const data = await response.json();
     if(data && data.length > 0) {
       const recs = getRecs();
-      data.forEach(item => { if(item.date) recs[item.date] = item; });
+      data.forEach(item => { 
+        if(item.date) {
+          // 핵심: T15:00.. 같은 찌꺼기가 있으면 잘라버림
+          const cleanDate = item.date.includes('T') ? item.date.split('T')[0] : item.date;
+          item.date = cleanDate; 
+          recs[cleanDate] = item; 
+        }
+      });
       setRecs(recs);
       renderTHist(); loadToday(); calcAll(); renderStats();
       el.textContent = `✓ 서버 동기화 완료`;
@@ -697,9 +704,8 @@ function calcAll(){
   const tk=document.getElementById('ticker').value;
   const remain=P-S*avg;
   const isBack=T>=a/2;
-  const isSoJin=T>=a-1; // 소진모드 진입 여부
+  const isSoJin=T>=a-1;
 
-  // 별% 공식 (방법론 기준)
   let sp;
   if(tk==='SOXL') sp=a===20?(20-2*T):(20-T);
   else sp=a===20?(15-1.5*T):(15-0.75*T);
@@ -707,11 +713,9 @@ function calcAll(){
   const starPoint=avg>0?avg*(1+sp/100):0;
   const bAmt=a-T>0&&remain>0?remain/(a-T):0;
   const qq=Math.floor(S/4);
-  // SOXL=20%, TQQQ=15%
   const finalPct=tk==='SOXL'?1.20:1.15;
   const fsp=avg*finalPct;
 
-  // PNL
   let pnlStr='—', pctStr='—', pnlColor='var(--text)';
   if(S>0&&avg>0&&cur>0){
     const pnl=(cur-avg)*S, pct=(cur-avg)/avg*100;
@@ -720,14 +724,12 @@ function calcAll(){
     pnlColor=pnl>=0?'var(--buy)':'var(--sell)';
   }
 
-  // ── 입력 탭 미리보기 ──
   document.getElementById('pv_star').textContent=avg>0?sp.toFixed(2)+'%  →  $'+starPoint.toFixed(2):'—';
   document.getElementById('pv_buy').textContent=bAmt>0?'$'+bAmt.toFixed(2):'—';
   const pnlEl=document.getElementById('pv_pnl');
   pnlEl.textContent=pnlStr+(pctStr!=='—'?'  /  '+pctStr:'');
   pnlEl.style.color=pnlColor;
 
-  // ── 현황 탭 ──
   document.getElementById('d_star').textContent=avg>0?'$'+starPoint.toFixed(2):'—';
   const dpnl=document.getElementById('d_pnl');
   dpnl.textContent=pnlStr; dpnl.style.color=pnlColor;
@@ -735,7 +737,6 @@ function calcAll(){
   document.getElementById('d_pct').style.color=pnlColor;
   document.getElementById('d_t').textContent=T>0?T.toFixed(4)+'T':'—';
 
-  // 전/후반전 + 소진모드 경고
   const modeEl=document.getElementById('d_mode');
   if(isSoJin){
     modeEl.innerHTML='<span style="color:#ff4444;font-size:13px;">🚨 소진모드 진입 (T≥'+(a-1)+')</span>';
@@ -751,13 +752,11 @@ function calcAll(){
   document.getElementById('d_buyamt').textContent=bAmt>0?'$'+bAmt.toFixed(2):'—';
   document.getElementById('dashDateDisp').textContent=document.getElementById('recDate').value||'';
 
-  // 매수/매도표
   document.getElementById('sellStar').textContent=avg>0?'$'+starPoint.toFixed(2):'—';
   document.getElementById('sellQQ').textContent=S>0?qq+'주':'—';
   document.getElementById('sellFP').textContent=avg>0?'$'+fsp.toFixed(2):'—';
   document.getElementById('sellFQ').textContent=S>0?(S-qq)+'주':'—';
 
-  // 힌트 - 종목별로 다르게 표시
   const hintStar=tk==='SOXL'
     ?(a===20?'SOXL 20분할 별%=(20−2T)%':'SOXL 40분할 별%=(20−T)%')
     :(a===20?'TQQQ 20분할 별%=(15−1.5T)%':'TQQQ 40분할 별%=(15−0.75T)%');
@@ -766,7 +765,6 @@ function calcAll(){
     ?'전반전: 절반→<span>별지점(or큰수) LOC</span> · 절반→<span>평단 LOC</span> · 이하 1주씩 추가'
     :'후반전: 전체→<span>별지점 LOC</span> · 이하 1주씩 추가 (별지점이 평단 <span>아래</span>)';
 
-  // fh 공식 힌트 업데이트
   const fhEl=document.querySelector('.fh');
   if(fhEl) fhEl.innerHTML=`${hintStar} · 별지점=<span>평단×(1+별%)</span> · 최종매도=<span>${hintFinal}</span> · 1회매수금=<span>잔금÷(a−T)</span>`;
 
@@ -788,12 +786,9 @@ function buildBuyTable(bAmt,starPoint,avg,cur,isBack){
   tbody.innerHTML='';
   if(bAmt<=0||starPoint<=0)return;
   const rows=[];
-  // 현재가 없으면 해당 매수가 기준으로 수량 계산
   if(!isBack){
     const h=bAmt/2,sp=starPoint-0.01;
-    const refPrice=cur>0?cur:sp; // 현재가 없으면 별지점 기준
     const sq=Math.floor(h/sp);
-    const aqRef=cur>0?cur:avg;
     const aq=Math.floor(h/avg);
     rows.push({tag:'★별지점',cls:'tstar',price:sp,qty:sq,amt:sp*sq});
     rows.push({tag:'평단',cls:'tb',price:avg,qty:aq,amt:avg*aq});
@@ -887,105 +882,24 @@ function calcTInc(){
   document.getElementById('nextTSub').style.color=isBack?'#ff7070':'#4cdd8a';
 }
 
+// 🛡️ 핵심 버그 수정: 이중 덮어쓰기 완전 차단!
 function applyNextT(){
   const nT=document.getElementById('nextT').textContent.replace('T','').trim();
-  const nS=document.getElementById('newShares').textContent.replace('주','').trim();
-  const nA=document.getElementById('newAvg').textContent.replace('$','').trim();
   if(!nT||nT==='—'){toast('⚠️ 체결 정보를 먼저 입력하세요');return;}
 
-  // 이미 적용됐는지 확인
-  const date=document.getElementById('recDate').value;
-  const recs=getRecs();
-  if(recs[date]&&recs[date].appliedToday){
-    toast('⚠️ 오늘 이미 적용했어요! 되돌리려면 아래 버튼을 눌러주세요');
-    return;
-  }
-
-  // 적용 전 원래 값 백업
-  const prevT=document.getElementById('tVal').value;
-  const prevS=document.getElementById('shares').value;
-  const prevA=document.getElementById('avgPrice').value;
-
-  document.getElementById('tVal').value=parseFloat(nT).toFixed(4);
-  if(nS&&nS!=='—')document.getElementById('shares').value=nS;
-  if(nA&&nA!=='—')document.getElementById('avgPrice').value=parseFloat(nA).toFixed(2);
-
-  // [핵심 버그 수정] 윗칸에 반영했으니 아래 체결 내역을 비워서 이중 계산 원천 차단!
-  initTRows();
-  document.getElementById('qSellDone').checked = false;
-
-  // 적용 완료 표시 + 버튼 변경
-  const btn=document.querySelector('[onclick="applyNextT()"]');
-  btn.textContent='✅ 오늘 적용 완료 (중복 방지)';
-  btn.style.background='#1a4a20';
-  btn.style.color='#4cdd8a';
-  btn.style.border='1px solid #2a6a30';
-  btn.style.cursor='default';
-
-  // 되돌리기 버튼 표시
-  showRevertBtn(prevT, prevS, prevA);
-
-  // appliedToday 플래그 저장
-  calcAll();
-  const r2=getRecs()[date]||{};
-  r2.appliedToday=true;
-  r2.prevT=prevT; r2.prevShares=prevS; r2.prevAvg=prevA;
-  const recs2=getRecs(); recs2[date]=r2; setRecs(recs2);
+  // 1. 화면 윗칸(오늘의 시작 T값)을 억지로 바꾸지 않고, 현재 계산된 결과 그대로 얌전히 저장만 수행!
   saveToday();
-  toast('✅ 윗칸 반영 완료! (이중계산 완벽 차단됨) 😊');
-}
 
-function showRevertBtn(prevT, prevS, prevA){
-  // 기존 되돌리기 버튼 제거
-  const existing=document.getElementById('revertBtn');
-  if(existing)existing.remove();
-
-  const div=document.createElement('div');
-  div.id='revertBtn';
-  div.style.cssText='margin-top:10px;background:#3d1a00;border:1px solid #6a3a00;border-radius:10px;padding:12px;';
-  div.innerHTML=`
-    <div style="font-size:12px;color:#ffaa00;margin-bottom:8px;">⚠️ 잘못 눌렀다면 되돌리기</div>
-    <div style="font-size:12px;color:var(--dim);margin-bottom:10px;font-family:var(--fm);">
-      이전 T값: ${prevT} · 보유주: ${prevS}주 · 평단: $${parseFloat(prevA).toFixed(2)}
-    </div>
-    <button onclick="revertApply('${prevT}','${prevS}','${prevA}')"
-      style="width:100%;background:#6a2000;border:1px solid #aa4000;color:#ffaa00;border-radius:8px;padding:10px;cursor:pointer;font-family:var(--fb);font-weight:700;font-size:13px;">
-      ↩ 이전 값으로 되돌리기
-    </button>`;
-  const applyBtn=document.querySelector('[onclick="applyNextT()"]');
-  applyBtn.parentNode.insertBefore(div, applyBtn.nextSibling);
-}
-
-function revertApply(prevT, prevS, prevA){
-  if(!confirm('이전 값으로 되돌릴까요?\\n(입력했던 체결 내역은 초기화되었으니 다시 적어야 해요!)'))return;
-  document.getElementById('tVal').value=prevT;
-  document.getElementById('shares').value=prevS;
-  document.getElementById('avgPrice').value=parseFloat(prevA).toFixed(2);
-
-  // 버튼 원래대로
+  // 2. 안내 버튼으로만 변경 (이중 클릭 방지)
   const btn=document.querySelector('[onclick="applyNextT()"]');
-  btn.textContent='✅ 내일 T값·평단·보유주 적용 후 저장';
-  btn.style.background='var(--gold)';
-  btn.style.color='#000';
-  btn.style.border='none';
-  btn.style.cursor='pointer';
-
-  // 되돌리기 버튼 제거
-  const rb=document.getElementById('revertBtn');
-  if(rb)rb.remove();
-
-  // appliedToday 플래그 제거
-  const date=document.getElementById('recDate').value;
-  const recs=getRecs();
-  if(recs[date]){
-    delete recs[date].appliedToday;
-    delete recs[date].prevT;
-    delete recs[date].prevShares;
-    delete recs[date].prevAvg;
-    setRecs(recs);
+  if(btn){
+    btn.textContent='✅ 저녁 기록 저장 완료 (내일 아침 이어받기 하세요)';
+    btn.style.background='#1a4a20';
+    btn.style.color='#4cdd8a';
+    btn.style.border='1px solid #2a6a30';
+    btn.style.cursor='default';
   }
-  calcAll(); saveToday();
-  toast('↩ 이전 값으로 되돌렸어요!');
+  toast('✅ 체결 내역이 안전하게 저장되었습니다!');
 }
 
 // ─── 차트 ───
