@@ -82,6 +82,7 @@ select{background:transparent;border:none;outline:none;font-family:var(--fb);fon
 .tlim{background:#2a1a00;color:#ffaa00;}
 .tstar{background:#2a2200;color:var(--gold);}
 .tq{background:#3d002d;color:var(--pink);}
+.trev{background:#4a2a00;color:#ffaa00;border:1px solid #804a00;}
 
 /* BUTTONS */
 .btn{border:none;border-radius:9px;font-family:var(--fb);font-weight:700;cursor:pointer;transition:all .15s;}
@@ -101,6 +102,8 @@ select{background:transparent;border:none;outline:none;font-family:var(--fb);fon
 .fh span{color:var(--gold);}
 .fhb{border-left-color:var(--blue);}
 .fhb span{color:var(--blue);}
+.fhr{border-left-color:#ffaa00; background:#1a1000;}
+.fhr span{color:#ffaa00;}
 
 /* CHECKLIST */
 .ckrow{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #141e2e;font-size:14px;color:var(--dim);}
@@ -193,6 +196,16 @@ input[type=checkbox]{width:18px;height:18px;accent-color:var(--buy);cursor:point
     <button class="btn bs bsm" onclick="setToday()">오늘</button>
   </div>
 
+  <div class="card" style="background:#1a1000; border:1px solid #804a00; margin-bottom:12px; padding:10px 14px;">
+    <div style="display:flex; align-items:center; justify-content:space-between;">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <input type="checkbox" id="isReverseMode" onchange="calcAll()" style="accent-color:#ffaa00; width:22px; height:22px;">
+        <span style="color:#ffaa00; font-weight:800; font-size:15px;">🔄 리버스 모드 활성화</span>
+      </div>
+      <span style="font-size:11px; color:var(--dim);">T소진 시 켜주세요!</span>
+    </div>
+  </div>
+
   <div class="carry" id="carryBanner">
     <div style="display:flex;justify-content:space-between;align-items:center;">
       <div>
@@ -218,7 +231,7 @@ input[type=checkbox]{width:18px;height:18px;accent-color:var(--buy);cursor:point
   </div>
 
   <div class="cp" style="margin-bottom:8px;" id="morningPreview">
-    <div class="cr"><span class="cn">⭐ 별지점</span><span class="cv2" id="pv_star" style="color:var(--gold);">—</span></div>
+    <div class="cr"><span class="cn" id="pv_star_lbl">⭐ 별지점</span><span class="cv2" id="pv_star" style="color:var(--gold);">—</span></div>
     <div class="cr"><span class="cn">🛒 1회 매수금</span><span class="cv2" id="pv_buy" style="color:var(--buy);">—</span></div>
     <div class="cr"><span class="cn">📊 평가손익 / 수익률</span><span class="cv2" id="pv_pnl">—</span></div>
     <div class="cr" style="border:none;"><span class="cn" style="font-size:12px;color:var(--muted);">📊 주문표는 현황 탭에서 확인</span><button class="btn bblue bsm" onclick="sw('dashboard')">현황 보기 →</button></div>
@@ -248,9 +261,21 @@ input[type=checkbox]{width:18px;height:18px;accent-color:var(--buy);cursor:point
     <div id="tCalcRows"></div>
     <button class="btn bs bsm" onclick="addTRow()" style="width:100%;margin-top:8px;border-color:#2a2a6a;color:#9090ff;">+ 체결 행 추가</button>
 
-    <div style="display:flex;align-items:center;gap:12px;margin-top:12px;padding:12px;background:var(--sf);border-radius:10px;">
+    <div id="normalEveningOpt" style="display:flex;align-items:center;gap:12px;margin-top:12px;padding:12px;background:var(--sf);border-radius:10px;">
       <input type="checkbox" id="qSellDone" onchange="calcTInc()" style="width:18px;height:18px;accent-color:var(--pink);">
       <span style="font-size:14px;color:var(--dim);">쿼터매도 체결됨 → T × 0.75 적용</span>
+    </div>
+
+    <div id="reverseEveningOpt" style="display:none; flex-direction:column; gap:8px; margin-top:12px; padding:12px; background:#1a1000; border:1px solid #804a00; border-radius:10px;">
+      <div style="font-size:12px; color:#ffaa00; margin-bottom:4px; font-weight:bold;">🔄 리버스모드 T값 계산기</div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <input type="checkbox" id="revSellDone" onchange="calcTInc()" style="width:18px;height:18px;accent-color:var(--sell);">
+        <span style="font-size:13px;color:var(--text);">매도 체결됨 <span style="color:var(--dim);">(T × 0.95)</span></span>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <input type="checkbox" id="revBuyDone" onchange="calcTInc()" style="width:18px;height:18px;accent-color:var(--buy);">
+        <span style="font-size:13px;color:var(--text);">매수 체결됨 <span style="color:var(--dim);">(T + 남은회차×0.25)</span></span>
+      </div>
     </div>
 
     <div style="background:#0a1520;border:1px solid #1a3040;border-radius:10px;padding:14px;margin-top:12px;">
@@ -258,8 +283,8 @@ input[type=checkbox]{width:18px;height:18px;accent-color:var(--buy);cursor:point
       <div class="cr"><span class="cn">체결 총 주수</span><span class="cv2" id="totalShares" style="color:var(--buy);">0주</span></div>
       <div class="cr"><span class="cn">새 보유 주수</span><span class="cv2" id="newShares">—</span></div>
       <div class="cr"><span class="cn">새 평균단가</span><span class="cv2" id="newAvg">—</span></div>
-      <div class="cr"><span class="cn">T 증가분</span><span class="cv2" id="tInc" style="color:var(--gold);">—</span></div>
-      <div class="cr" style="border:none;"><span class="cn" style="color:var(--pink);">쿼터매도 후 T값</span><span class="cv2" id="afterQT" style="color:var(--pink);">—</span></div>
+      <div class="cr" id="tIncRow"><span class="cn">T 증가분</span><span class="cv2" id="tInc" style="color:var(--gold);">—</span></div>
+      <div class="cr" id="afterQTRow" style="border:none;"><span class="cn" style="color:var(--pink);">쿼터매도 후 T값</span><span class="cv2" id="afterQT" style="color:var(--pink);">—</span></div>
     </div>
 
     <div class="nextt">
@@ -302,7 +327,7 @@ input[type=checkbox]{width:18px;height:18px;accent-color:var(--buy);cursor:point
 
   <div class="g2" style="margin-bottom:12px;">
     <div class="card" style="background:#0d1a30;border-color:#1a4060;">
-      <div class="cl" style="color:var(--blue);">⭐ 별지점</div>
+      <div class="cl" style="color:var(--blue);" id="d_star_lbl">⭐ 별지점</div>
       <div class="big-num" id="d_star" style="color:var(--gold);">—</div>
     </div>
     <div class="card">
@@ -314,7 +339,7 @@ input[type=checkbox]{width:18px;height:18px;accent-color:var(--buy);cursor:point
 
   <div class="g4" style="margin-bottom:12px;">
     <div class="card"><div class="cl">🔢 T값</div><div class="cv" id="d_t" style="color:var(--blue);">—</div></div>
-    <div class="card"><div class="cl">🏁 전/후반전</div><div id="d_mode" style="font-size:15px;font-weight:900;margin-top:4px;">—</div></div>
+    <div class="card"><div class="cl">🏁 상태</div><div id="d_mode" style="font-size:15px;font-weight:900;margin-top:4px;">—</div></div>
     <div class="card"><div class="cl">📌 평단</div><div class="cv" id="d_avg">—</div></div>
     <div class="card"><div class="cl">💵 잔금</div><div class="cv" id="d_remain" style="color:var(--blue);">—</div></div>
   </div>
@@ -329,7 +354,7 @@ input[type=checkbox]{width:18px;height:18px;accent-color:var(--buy);cursor:point
     <div class="t-hist" id="tHist"><span style="color:var(--muted);font-size:12px;">저장 기록 없음</span></div>
   </div>
 
-  <div class="fh" style="margin-bottom:4px;">SOXL 40분할 별%=<span>(20−T)%</span> · 별지점=<span>평단×(1+별%)</span> · 최종매도=<span>평단×1.20</span></div>
+  <div class="fh" style="margin-bottom:4px;" id="modeGuideFH">SOXL 40분할 별%=<span>(20−T)%</span> · 별지점=<span>평단×(1+별%)</span> · 최종매도=<span>평단×1.20</span></div>
   <div class="div"></div>
 
   <div class="lbl">📥 매수 주문표 (LOC)</div>
@@ -342,24 +367,11 @@ input[type=checkbox]{width:18px;height:18px;accent-color:var(--buy);cursor:point
   </div>
 
   <div class="lbl">📤 매도 주문표 (매일 필수)</div>
-  <div class="fh" style="margin-bottom:10px;">전/후반전 <span>공통</span> · 지정가는 <span>프리장 전(서머 5시/비서머 6시)</span></div>
+  <div id="sellGuide" class="fh" style="margin-bottom:10px;">전/후반전 <span>공통</span> · 지정가는 <span>프리장 전(서머 5시/비서머 6시)</span></div>
   <div class="card" style="padding:0;overflow:hidden;">
     <table class="tt">
       <thead><tr><th>구분</th><th>방식</th><th>매도가 ($)</th><th>수량</th><th>✓</th></tr></thead>
-      <tbody>
-        <tr>
-          <td><span class="tag tq">쿼터매도</span></td><td><span class="tag tl">LOC</span></td>
-          <td><span id="sellStar" style="font-family:var(--fm);font-weight:700;color:var(--gold);font-size:16px;">—</span></td>
-          <td><span id="sellQQ" style="font-family:var(--fm);font-weight:700;color:var(--pink);font-size:16px;">—</span></td>
-          <td><input type="checkbox"></td>
-        </tr>
-        <tr>
-          <td><span class="tag ts">최종매도</span></td><td><span class="tag tlim">지정가</span></td>
-          <td><span id="sellFP" style="font-family:var(--fm);font-weight:700;color:var(--sell);font-size:16px;">—</span></td>
-          <td><span id="sellFQ" style="font-family:var(--fm);font-weight:700;color:var(--sell);font-size:16px;">—</span></td>
-          <td><input type="checkbox"></td>
-        </tr>
-      </tbody>
+      <tbody id="sellBody"></tbody>
     </table>
   </div>
 </div>
@@ -475,7 +487,7 @@ window.onload=()=>{
   loadToday();
   calcAll();
   renderStats();
-  syncFromCloud(); // 시작 시 자동 동기화
+  syncFromCloud(); 
 };
 
 function setToday(){
@@ -512,6 +524,8 @@ function onDateChange(){
 function resetNightSection(){
   initTRows();
   document.getElementById('qSellDone').checked=false;
+  document.getElementById('revSellDone').checked=false;
+  document.getElementById('revBuyDone').checked=false;
   document.getElementById('totalAmt').textContent='$0.00';
   document.getElementById('totalShares').textContent='0주';
   ['newShares','newAvg','tInc','afterQT'].forEach(id=>document.getElementById(id).textContent='—');
@@ -577,11 +591,12 @@ function carryFromPrev(){
   document.getElementById('avgPrice').value=r.newAvg?parseFloat(r.newAvg).toFixed(2):r.avgPrice||'';
   document.getElementById('curPrice').value='';
   document.getElementById('tVal').value=r.nextT||r.tVal||'';
+  document.getElementById('isReverseMode').checked = r.isReverseMode || false;
   document.getElementById('carryBanner').style.display='none';
   calcAll(); toast(`📥 ${prev} 데이터 이어받기 완료!`);
 }
 
-// ─── 🚀 SAVE / LOAD (버그 수정 완료) ───
+// ─── 🚀 SAVE / LOAD ───
 async function saveToday(){
   const date=document.getElementById('recDate').value;
   if(!date){toast('날짜를 입력해주세요');return;}
@@ -590,6 +605,8 @@ async function saveToday(){
   const T=parseFloat(document.getElementById('tVal').value)||0;
   const a=parseInt(document.getElementById('splitNum').value)||40;
   const tk=document.getElementById('ticker').value;
+  const isRev = document.getElementById('isReverseMode').checked;
+
   let sp; if(tk==='SOXL')sp=a===20?(20-2*T):(20-T); else sp=a===20?(15-1.5*T):(15-0.75*T);
   const starPoint=avg>0?avg*(1+sp/100):0;
   const ret=avg>0&&cur>0?(cur-avg)/avg*100:null;
@@ -607,6 +624,7 @@ async function saveToday(){
     closePrice:document.getElementById('closePrice').value,
     execSell:document.getElementById('execSell').value,
     notes:document.getElementById('notes').value,
+    isReverseMode: isRev,
     c1:document.getElementById('c1').checked,c2:document.getElementById('c2').checked,
     c3:document.getElementById('c3').checked,c4:document.getElementById('c4').checked,
     c5:document.getElementById('c5').checked,
@@ -617,7 +635,6 @@ async function saveToday(){
     savedAt:new Date().toISOString()
   };
   
-  // 1. 로컬 저장
   const recs=getRecs();recs[date]=r;setRecs(recs);
   renderTHist();
   const el=document.getElementById('saveStatus');
@@ -625,7 +642,6 @@ async function saveToday(){
   el.className='ss ok';
   toast('💾 로컬 저장되었습니다!');
 
-  // 2. 서버 전송
   el.textContent = "🚀 서버 전송 중...";
   try {
     await fetch(WEB_APP_URL, { method: "POST", body: JSON.stringify(r) });
@@ -637,7 +653,6 @@ async function saveToday(){
   }
 }
 
-// 🛡️ 좀비 날짜 자르기 완벽 적용
 async function syncFromCloud(){
   const el = document.getElementById('saveStatus');
   el.textContent = "🔄 서버 동기화 중...";
@@ -648,7 +663,6 @@ async function syncFromCloud(){
       const recs = getRecs();
       data.forEach(item => { 
         if(item.date) {
-          // 핵심: T15:00.. 같은 찌꺼기가 있으면 잘라버림
           const cleanDate = item.date.includes('T') ? item.date.split('T')[0] : item.date;
           item.date = cleanDate; 
           recs[cleanDate] = item; 
@@ -689,6 +703,7 @@ function fillForm(r){
   if(r.closePrice)document.getElementById('closePrice').value=r.closePrice;
   if(r.execSell)document.getElementById('execSell').value=r.execSell;
   if(r.notes)document.getElementById('notes').value=r.notes;
+  document.getElementById('isReverseMode').checked = r.isReverseMode || false;
   ['c1','c2','c3','c4','c5'].forEach(id=>document.getElementById(id).checked=r[id]||false);
   calcAll();
 }
@@ -703,48 +718,134 @@ function calcAll(){
   const a=parseInt(document.getElementById('splitNum').value)||40;
   const tk=document.getElementById('ticker').value;
   const remain=P-S*avg;
-  const isBack=T>=a/2;
-  const isSoJin=T>=a-1;
+  const isRev = document.getElementById('isReverseMode').checked;
 
-  let sp;
-  if(tk==='SOXL') sp=a===20?(20-2*T):(20-T);
-  else sp=a===20?(15-1.5*T):(15-0.75*T);
-
-  const starPoint=avg>0?avg*(1+sp/100):0;
-  const bAmt=a-T>0&&remain>0?remain/(a-T):0;
-  const qq=Math.floor(S/4);
-  const finalPct=tk==='SOXL'?1.20:1.15;
-  const fsp=avg*finalPct;
-
-  let pnlStr='—', pctStr='—', pnlColor='var(--text)';
+  let pnlStr='—', pctStr='—', pnlColor='var(--text)', pct=0;
   if(S>0&&avg>0&&cur>0){
-    const pnl=(cur-avg)*S, pct=(cur-avg)/avg*100;
+    const pnl=(cur-avg)*S;
+    pct=(cur-avg)/avg*100;
     pnlStr=(pnl>=0?'+':'')+'$'+pnl.toFixed(2);
     pctStr=(pct>=0?'+':'')+pct.toFixed(2)+'%';
     pnlColor=pnl>=0?'var(--buy)':'var(--sell)';
   }
 
-  document.getElementById('pv_star').textContent=avg>0?sp.toFixed(2)+'%  →  $'+starPoint.toFixed(2):'—';
-  document.getElementById('pv_buy').textContent=bAmt>0?'$'+bAmt.toFixed(2):'—';
+  // 1️⃣ 일반 모드
+  if(!isRev){
+    const isBack=T>=a/2;
+    const isSoJin=T>=a-1;
+    document.getElementById('normalEveningOpt').style.display='flex';
+    document.getElementById('reverseEveningOpt').style.display='none';
+    document.getElementById('tIncRow').style.display='flex';
+    document.getElementById('afterQTRow').style.display='flex';
+
+    if (isSoJin) toast("🚨 T값이 소진되었습니다! 리버스 모드를 켜주세요.");
+
+    let sp;
+    if(tk==='SOXL') sp=a===20?(20-2*T):(20-T);
+    else sp=a===20?(15-1.5*T):(15-0.75*T);
+
+    const starPoint=avg>0?avg*(1+sp/100):0;
+    const bAmt=a-T>0&&remain>0?remain/(a-T):0;
+    const qq=Math.floor(S/4);
+    const finalPct=tk==='SOXL'?1.20:1.15;
+    const fsp=avg*finalPct;
+
+    document.getElementById('pv_star_lbl').textContent='⭐ 별지점';
+    document.getElementById('pv_star').textContent=avg>0?sp.toFixed(2)+'%  →  $'+starPoint.toFixed(2):'—';
+    document.getElementById('pv_buy').textContent=bAmt>0?'$'+bAmt.toFixed(2):'—';
+
+    document.getElementById('d_star_lbl').textContent='⭐ 별지점';
+    document.getElementById('d_star').textContent=avg>0?'$'+starPoint.toFixed(2):'—';
+    document.getElementById('d_t').textContent=T>0?T.toFixed(4)+'T':'—';
+
+    const modeEl=document.getElementById('d_mode');
+    if(isSoJin) modeEl.innerHTML='<span style="color:#ff4444;font-size:13px;">🚨 소진모드 진입 (T≥'+(a-1)+')</span>';
+    else if(isBack) modeEl.innerHTML='<span style="color:#ff7070;">🔴 후반전</span>';
+    else modeEl.innerHTML='<span style="color:#4cdd8a;">🟢 전반전</span>';
+
+    document.getElementById('modeGuideFH').className='fh';
+    document.getElementById('modeGuideFH').innerHTML=`${tk} ${a}분할 별%=<span>(${a===20?'20−2T':'20−T'})%</span> · 별지점=<span>평단×(1+별%)</span> · 최종매도=<span>평단×${finalPct.toFixed(2)}</span>`;
+    document.getElementById('modeGuide').innerHTML=!isBack
+      ?'전반전: 절반→<span>별지점(or큰수) LOC</span> · 절반→<span>평단 LOC</span> · 이하 1주씩 추가'
+      :'후반전: 전체→<span>별지점 LOC</span> · 이하 1주씩 추가 (별지점이 평단 <span>아래</span>)';
+    document.getElementById('sellGuide').innerHTML='전/후반전 <span>공통</span> · 지정가는 <span>프리장 전(서머 5시/비서머 6시)</span>';
+
+    buildBuyTable(bAmt,starPoint,avg,isBack);
+    
+    // 일반모드 매도표 그리기 (체크박스 복구)
+    document.getElementById('sellBody').innerHTML=`
+      <tr>
+        <td><span class="tag tq">쿼터매도</span></td><td><span class="tag tl">LOC</span></td>
+        <td><span style="font-family:var(--fm);font-weight:700;color:var(--gold);font-size:16px;">${starPoint>0?'$'+starPoint.toFixed(2):'—'}</span></td>
+        <td><span style="font-family:var(--fm);font-weight:700;color:var(--pink);font-size:16px;">${S>0?qq+'주':'—'}</span></td>
+        <td><input type="checkbox"></td>
+      </tr>
+      <tr>
+        <td><span class="tag ts">최종매도</span></td><td><span class="tag tlim">지정가</span></td>
+        <td><span style="font-family:var(--fm);font-weight:700;color:var(--sell);font-size:16px;">${fsp>0?'$'+fsp.toFixed(2):'—'}</span></td>
+        <td><span style="font-family:var(--fm);font-weight:700;color:var(--sell);font-size:16px;">${S>0?(S-qq)+'주':'—'}</span></td>
+        <td><input type="checkbox"></td>
+      </tr>`;
+  }
+  // 2️⃣ 리버스 모드
+  else {
+    document.getElementById('normalEveningOpt').style.display='none';
+    document.getElementById('reverseEveningOpt').style.display='flex';
+    document.getElementById('tIncRow').style.display='none';
+    document.getElementById('afterQTRow').style.display='none';
+
+    const modeEl=document.getElementById('d_mode');
+    if (pct >= -20 && avg > 0) {
+      modeEl.innerHTML='<span style="color:#4cdd8a;font-size:13px;line-height:1.2;">🟢 수익 -20% 돌파!<br>리버스모드 끄세요!</span>';
+      toast('🟢 -20% 회복! 리버스 모드를 끄고 일반모드로 복귀하세요!');
+    } else {
+      modeEl.innerHTML='<span style="color:#ffaa00;font-size:15px;">🔄 리버스 모드</span>';
+    }
+
+    let prevDates = Object.keys(getRecs()).filter(d => d < document.getElementById('recDate').value).sort((x,y)=>y.localeCompare(x));
+    let sumC = 0, cntC = 0;
+    for(let i=0; i<5 && i<prevDates.length; i++){
+        let cp = parseFloat(getRecs()[prevDates[i]].closePrice);
+        if(cp > 0){ sumC += cp; cntC++; }
+    }
+    const starPoint = cntC > 0 ? sumC / cntC : avg; 
+    const bAmt = remain > 0 ? remain / 4 : 0; 
+    const sellQty = Math.floor(S / (a/2)); 
+
+    document.getElementById('pv_star_lbl').textContent='🔄 5일평균 별지점';
+    document.getElementById('pv_star').textContent=cntC>0?'$'+starPoint.toFixed(2):'기록 부족';
+    document.getElementById('pv_buy').textContent=bAmt>0?'$'+bAmt.toFixed(2):'—';
+    
+    document.getElementById('d_star_lbl').textContent='🔄 5일평균 별지점';
+    document.getElementById('d_star').textContent=cntC>0?'$'+starPoint.toFixed(2):'—';
+    document.getElementById('d_t').textContent=T>0?T.toFixed(4)+'T':'—';
+
+    document.getElementById('modeGuideFH').className='fh fhr';
+    document.getElementById('modeGuideFH').innerHTML=`리버스모드 · 별지점=<span>직전 5일 종가 평균</span> · 매수금=<span>잔금÷4</span>`;
+    document.getElementById('modeGuide').innerHTML=`리버스 매수: 1회매수액 전체를 <span>별지점 LOC 매수</span> (일반 후반전과 동일 표)`;
+    document.getElementById('sellGuide').innerHTML=`리버스 매도: 보유량의 <span>${a/2}등분</span>을 별지점 위에서 <span>LOC 매도</span> (첫날은 MOC)`;
+
+    buildBuyTable(bAmt, starPoint, avg, true); // 리버스는 항상 후반전(전액 별지점 매수) 로직과 동일
+    
+    // 리버스모드 매도표 그리기 (체크박스 복구)
+    document.getElementById('sellBody').innerHTML=`
+      <tr>
+        <td><span class="tag trev">Reverse</span></td><td><span class="tag tl">LOC</span></td>
+        <td><span style="font-family:var(--fm);font-weight:700;color:var(--gold);font-size:16px;">${starPoint>0?'$'+starPoint.toFixed(2):'—'}</span></td>
+        <td><span style="font-family:var(--fm);font-weight:700;color:var(--sell);font-size:16px;">${sellQty>0?sellQty+'주':'—'}</span></td>
+        <td><input type="checkbox"></td>
+      </tr>`;
+  }
+
+  // 공통 UI 업데이트
   const pnlEl=document.getElementById('pv_pnl');
   pnlEl.textContent=pnlStr+(pctStr!=='—'?'  /  '+pctStr:'');
   pnlEl.style.color=pnlColor;
 
-  document.getElementById('d_star').textContent=avg>0?'$'+starPoint.toFixed(2):'—';
   const dpnl=document.getElementById('d_pnl');
   dpnl.textContent=pnlStr; dpnl.style.color=pnlColor;
   document.getElementById('d_pct').textContent=pctStr;
   document.getElementById('d_pct').style.color=pnlColor;
-  document.getElementById('d_t').textContent=T>0?T.toFixed(4)+'T':'—';
-
-  const modeEl=document.getElementById('d_mode');
-  if(isSoJin){
-    modeEl.innerHTML='<span style="color:#ff4444;font-size:13px;">🚨 소진모드 진입 (T≥'+(a-1)+')</span>';
-  } else if(isBack){
-    modeEl.innerHTML='<span style="color:#ff7070;">🔴 후반전</span>';
-  } else {
-    modeEl.innerHTML='<span style="color:#4cdd8a;">🟢 전반전</span>';
-  }
 
   document.getElementById('d_avg').textContent=avg>0?'$'+avg.toFixed(2):'—';
   document.getElementById('d_remain').textContent=remain>=0?'$'+remain.toFixed(2):'—';
@@ -752,23 +853,6 @@ function calcAll(){
   document.getElementById('d_buyamt').textContent=bAmt>0?'$'+bAmt.toFixed(2):'—';
   document.getElementById('dashDateDisp').textContent=document.getElementById('recDate').value||'';
 
-  document.getElementById('sellStar').textContent=avg>0?'$'+starPoint.toFixed(2):'—';
-  document.getElementById('sellQQ').textContent=S>0?qq+'주':'—';
-  document.getElementById('sellFP').textContent=avg>0?'$'+fsp.toFixed(2):'—';
-  document.getElementById('sellFQ').textContent=S>0?(S-qq)+'주':'—';
-
-  const hintStar=tk==='SOXL'
-    ?(a===20?'SOXL 20분할 별%=(20−2T)%':'SOXL 40분할 별%=(20−T)%')
-    :(a===20?'TQQQ 20분할 별%=(15−1.5T)%':'TQQQ 40분할 별%=(15−0.75T)%');
-  const hintFinal=tk==='SOXL'?'평단×1.20':'평단×1.15';
-  document.getElementById('modeGuide').innerHTML=!isBack
-    ?'전반전: 절반→<span>별지점(or큰수) LOC</span> · 절반→<span>평단 LOC</span> · 이하 1주씩 추가'
-    :'후반전: 전체→<span>별지점 LOC</span> · 이하 1주씩 추가 (별지점이 평단 <span>아래</span>)';
-
-  const fhEl=document.querySelector('.fh');
-  if(fhEl) fhEl.innerHTML=`${hintStar} · 별지점=<span>평단×(1+별%)</span> · 최종매도=<span>${hintFinal}</span> · 1회매수금=<span>잔금÷(a−T)</span>`;
-
-  buildBuyTable(bAmt,starPoint,avg,cur,isBack);
   calcTInc();
 }
 
@@ -781,7 +865,8 @@ function makeAddPrices(base,isFront,count){
   return prices;
 }
 
-function buildBuyTable(bAmt,starPoint,avg,cur,isBack){
+// 매수표 그리기 (체크박스 복구)
+function buildBuyTable(bAmt,starPoint,avg,isBack){
   const tbody=document.getElementById('buyBody');
   tbody.innerHTML='';
   if(bAmt<=0||starPoint<=0)return;
@@ -842,6 +927,7 @@ function removeTRow(id){
 }
 
 function calcTInc(){
+  const isRev = document.getElementById('isReverseMode').checked;
   let totalAmt=0, totalSh=0;
   document.querySelectorAll('[id^="tp_"]').forEach(el=>{
     const rid=el.id.replace('tp_','');
@@ -856,7 +942,8 @@ function calcTInc(){
   const T=parseFloat(document.getElementById('tVal').value)||0;
   const a=parseInt(document.getElementById('splitNum').value)||40;
   const P=parseFloat(document.getElementById('principal').value)||0;
-  const bAmt=a-T>0&&(P-S*avg)>0?(P-S*avg)/(a-T):0;
+  const remain = P - S*avg;
+
   if(totalSh>0&&S>0&&avg>0){
     const nS=S+totalSh, nA=(S*avg+totalAmt)/nS;
     document.getElementById('newShares').textContent=nS+'주';
@@ -865,32 +952,42 @@ function calcTInc(){
     document.getElementById('newShares').textContent='—';
     document.getElementById('newAvg').textContent='—';
   }
-  if(totalAmt<=0||bAmt<=0){
-    ['tInc','afterQT'].forEach(id=>document.getElementById(id).textContent='—');
-    document.getElementById('nextT').textContent='—';
-    document.getElementById('nextTSub').textContent='';
-    return;
+
+  let nT = T;
+
+  if(!isRev){
+    const bAmt=a-T>0&&remain>0?remain/(a-T):0;
+    if(totalAmt<=0||bAmt<=0){
+      ['tInc','afterQT'].forEach(id=>document.getElementById(id).textContent='—');
+      document.getElementById('nextT').textContent='—';
+      document.getElementById('nextTSub').textContent='';
+      return;
+    }
+    nT=T+totalAmt/bAmt;
+    document.getElementById('tInc').textContent='+'+(totalAmt/bAmt).toFixed(4)+'T';
+    const qDone=document.getElementById('qSellDone').checked;
+    if(qDone){const aq=nT*0.75;document.getElementById('afterQT').textContent=aq.toFixed(4)+'T';nT=aq;}
+    else document.getElementById('afterQT').textContent='—';
+    document.getElementById('nextT').textContent=nT.toFixed(4)+'T';
+    const isBack=nT>=a/2;
+    document.getElementById('nextTSub').textContent=isBack?'🔴 후반전':'🟢 전반전';
+    document.getElementById('nextTSub').style.color=isBack?'#ff7070':'#4cdd8a';
+  } else {
+    if(document.getElementById('revSellDone').checked){ nT = nT * 0.95; }
+    if(document.getElementById('revBuyDone').checked){ nT = nT + (a - nT) * 0.25; }
+    
+    document.getElementById('nextT').textContent=nT.toFixed(4)+'T';
+    document.getElementById('nextTSub').textContent='🔄 리버스 모드 진행 중';
+    document.getElementById('nextTSub').style.color='#ffaa00';
   }
-  let nT=T+totalAmt/bAmt;
-  document.getElementById('tInc').textContent='+'+(totalAmt/bAmt).toFixed(4)+'T';
-  const qDone=document.getElementById('qSellDone').checked;
-  if(qDone){const aq=nT*0.75;document.getElementById('afterQT').textContent=aq.toFixed(4)+'T';nT=aq;}
-  else document.getElementById('afterQT').textContent='—';
-  document.getElementById('nextT').textContent=nT.toFixed(4)+'T';
-  const isBack=nT>=a/2;
-  document.getElementById('nextTSub').textContent=isBack?'🔴 후반전':'🟢 전반전';
-  document.getElementById('nextTSub').style.color=isBack?'#ff7070':'#4cdd8a';
 }
 
-// 🛡️ 핵심 버그 수정: 이중 덮어쓰기 완전 차단!
 function applyNextT(){
   const nT=document.getElementById('nextT').textContent.replace('T','').trim();
   if(!nT||nT==='—'){toast('⚠️ 체결 정보를 먼저 입력하세요');return;}
 
-  // 1. 화면 윗칸(오늘의 시작 T값)을 억지로 바꾸지 않고, 현재 계산된 결과 그대로 얌전히 저장만 수행!
   saveToday();
 
-  // 2. 안내 버튼으로만 변경 (이중 클릭 방지)
   const btn=document.querySelector('[onclick="applyNextT()"]');
   if(btn){
     btn.textContent='✅ 저녁 기록 저장 완료 (내일 아침 이어받기 하세요)';
