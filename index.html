@@ -190,7 +190,10 @@ input[type=checkbox]{width:18px;height:18px;accent-color:var(--buy);cursor:point
   <div class="card" style="margin-bottom:12px;display:flex;align-items:center;gap:14px;">
     <div style="flex:1;">
       <div class="cl">📅 오늘 날짜</div>
-      <input type="date" id="recDate" class="cv" onchange="onDateChange()">
+      <div style="display:flex; align-items:center; gap:8px;">
+        <input type="date" id="recDate" class="cv" onchange="onDateChange()">
+        <button class="btn bblue bsm" onclick="carryFromPrev(true)" style="white-space:nowrap; padding:8px 12px;">⬇️ 강제 이어받기</button>
+      </div>
     </div>
     <button class="btn bs bsm" onclick="setToday()">오늘</button>
   </div>
@@ -211,7 +214,7 @@ input[type=checkbox]{width:18px;height:18px;accent-color:var(--buy);cursor:point
         <div style="font-size:12px;color:#4cdd8a;font-weight:700;margin-bottom:4px;">📥 전날 데이터 이어받기 가능</div>
         <div style="font-size:13px;color:var(--dim);" id="carryInfo"></div>
       </div>
-      <button class="btn bblue bsm" onclick="carryFromPrev()">이어받기</button>
+      <button class="btn bblue bsm" onclick="carryFromPrev(false)">이어받기</button>
     </div>
   </div>
 
@@ -555,9 +558,14 @@ function checkCarry(){
   const date=document.getElementById('recDate').value;
   if(!date){document.getElementById('carryBanner').style.display='none';return;}
   const recs=getRecs();
-  if(recs[date]){document.getElementById('carryBanner').style.display='none';return;}
+  // 자동 이어받기 배너는 데이터가 없거나, 이전 날짜 데이터가 있을 때만 표시
+  if(recs[date]){
+      document.getElementById('carryBanner').style.display='none';
+      return;
+  }
   const prev=getPrevDate(date,recs);
   if(!prev){document.getElementById('carryBanner').style.display='none';return;}
+  
   const r=recs[prev];
   const nS=r.newShares||r.shares||'—';
   const nA=parseFloat(r.newAvg||r.avgPrice||0).toFixed(2);
@@ -572,11 +580,21 @@ function getPrevDate(date,recs){
   return dates.length?dates[dates.length-1]:null;
 }
 
-function carryFromPrev(){
+// 강제 이어받기 기능 통합
+function carryFromPrev(isForce = false){
   const date=document.getElementById('recDate').value;
   const recs=getRecs();
   const prev=getPrevDate(date,recs);
-  if(!prev)return;
+  if(!prev) {
+      if(isForce) toast('불러올 이전 날짜 기록이 없습니다.');
+      return;
+  }
+  
+  // 강제 이어받기일 경우 덮어쓰기 확인
+  if(isForce && recs[date]) {
+      if(!confirm(`이미 ${date} 데이터가 있습니다.\n${prev} 데이터를 덮어씌우시겠습니까?`)) return;
+  }
+
   const r=recs[prev];
   document.getElementById('ticker').value=r.ticker||'SOXL';
   document.getElementById('splitNum').value=r.splitNum||'40';
@@ -587,7 +605,8 @@ function carryFromPrev(){
   document.getElementById('tVal').value=r.nextT||r.tVal||'';
   document.getElementById('isReverseMode').checked = r.isReverseMode || false;
   document.getElementById('carryBanner').style.display='none';
-  calcAll(); toast(`📥 ${prev} 데이터 이어받기 완료!`);
+  calcAll(); 
+  toast(`📥 ${prev} 데이터 이어받기 완료!`);
 }
 
 // ─── 🚀 SAVE / LOAD ───
@@ -666,7 +685,6 @@ async function syncFromCloud(){
           const dateStr = String(item.date);
           const cleanDate = dateStr.includes('T') ? dateStr.split('T')[0] : dateStr;
           item.date = cleanDate; 
-          // 서버 데이터에 isReverseMode가 없어도 로컬 데이터 보호
           if (recs[cleanDate] && recs[cleanDate].isReverseMode !== undefined && item.isReverseMode === undefined) {
              item.isReverseMode = recs[cleanDate].isReverseMode;
           }
@@ -726,7 +744,7 @@ function calcAll(){
   const isRev = document.getElementById('isReverseMode').checked;
 
   let pnlStr='—', pctStr='—', pnlColor='var(--text)', pct=0;
-  let bAmt = 0; // 🚨 크래시 방지 핵심 수리 완료!
+  let bAmt = 0; 
 
   if(S>0&&avg>0&&cur>0){
     const pnl=(cur-avg)*S;
