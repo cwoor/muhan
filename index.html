@@ -190,7 +190,10 @@ input[type=checkbox]{width:18px;height:18px;accent-color:var(--buy);cursor:point
   <div class="card" style="margin-bottom:12px;display:flex;align-items:center;gap:14px;">
     <div style="flex:1;">
       <div class="cl">📅 오늘 날짜</div>
-      <input type="date" id="recDate" class="cv" onchange="onDateChange()">
+      <div style="display:flex; align-items:center; gap:8px;">
+        <input type="date" id="recDate" class="cv" onchange="onDateChange()">
+        <button class="btn bblue bsm" onclick="carryFromPrev(true)" style="white-space:nowrap; padding:8px 12px;">⬇️ 강제 이어받기</button>
+      </div>
     </div>
     <button class="btn bs bsm" onclick="setToday()">오늘</button>
   </div>
@@ -507,8 +510,10 @@ function onDateChange(){
   checkCarry(); renderTHist(); loadToday();
 }
 
+// 🚨 사장님 요청: 당일 입력 데이터 완벽 초기화!
 function resetNightSection(){
   initTRows();
+  document.getElementById('curPrice').value=''; // 현재가 비우기
   document.getElementById('sellPriceInput').value='';
   document.getElementById('sellQtyInput').value='';
   document.getElementById('applySellT').checked=false;
@@ -517,7 +522,7 @@ function resetNightSection(){
   ['newShares','newAvg','tInc'].forEach(id=>document.getElementById(id).textContent='—');
   document.getElementById('nextT').textContent='—';
   document.getElementById('nextTSub').textContent='';
-  ['closePrice','notes'].forEach(id=>document.getElementById(id).value='');
+  ['closePrice','notes'].forEach(id=>document.getElementById(id).value=''); // 종가, 메모 비우기
   
   const btn=document.querySelector('[onclick="applyNextT()"]');
   if(btn){
@@ -587,20 +592,25 @@ function carryFromPrev(isForce){
       return;
   }
   
-  if(isForce) {
+  if(isForce && recs[date]) {
       if(!confirm(`이미 ${date} 데이터가 있습니다.\n${prev} 데이터를 다시 덮어씌우시겠습니까?\n(현재 화면에 입력된 오늘 데이터는 초기화됩니다)`)) return;
   }
 
   const r=recs[prev];
+  
+  // 🚨 1. 기초 설정값(뼈대)만 끌어오기
   document.getElementById('ticker').value=r.ticker||'SOXL';
   document.getElementById('splitNum').value=r.splitNum||'40';
   document.getElementById('principal').value=r.principal||'';
   document.getElementById('shares').value=r.newShares||r.shares||'';
   document.getElementById('avgPrice').value=r.newAvg?parseFloat(r.newAvg).toFixed(2):r.avgPrice||'';
-  document.getElementById('curPrice').value='';
   document.getElementById('tVal').value=r.nextT||r.tVal||'';
   document.getElementById('isReverseMode').checked = r.isReverseMode || false;
   
+  // 🚨 2. 당일 입력칸(살)은 완벽하게 백지로 만들기!
+  resetNightSection();
+
+  document.getElementById('carryBanner').style.display='none';
   calcAll(); 
   toast(`📥 ${prev} 데이터 이어받기 완료!`);
 }
