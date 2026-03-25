@@ -31,7 +31,6 @@ body{background:var(--bg);color:var(--text);font-family:var(--fb);min-height:100
 .hdr h1{font-size:20px;font-weight:900;letter-spacing:-0.5px;}
 .hdr h1 span{color:var(--gold);}
 .hdr p{font-size:12px;color:var(--dim);margin-top:4px;font-family:var(--fm);}
-.badge{background:#0d1a0d;border:1px solid #2a5a2a;color:#4caf50;font-size:12px;font-weight:700;padding:5px 12px;border-radius:20px;}
 
 /* SECTION */
 .sec{display:flex;align-items:center;gap:8px;margin:20px 0 12px;}
@@ -259,17 +258,21 @@ input[type=checkbox]{width:18px;height:18px;accent-color:var(--buy);cursor:point
     </div>
 
     <div id="tCalcRows"></div>
-    <button class="btn bs bsm" onclick="addTRow()" style="width:100%;margin-top:8px;border-color:#2a2a6a;color:#9090ff;">+ 체결 행 추가</button>
+    <button class="btn bs bsm" onclick="addTRow()" style="width:100%;margin-top:8px;border-color:#2a2a6a;color:#9090ff;">+ 매수 체결 행 추가</button>
 
     <div class="div" style="margin:20px 0;"></div>
     <div class="lbl" style="margin:0 0 8px 0; color:var(--sell);">📤 매도 체결 입력 (쿼터/리버스)</div>
     <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;">
+      <input type="number" id="sellPriceInput" placeholder="매도가 ($)" step="0.01" 
+        style="flex:2;background:var(--sf);border:1px solid var(--bd);border-radius:8px;padding:10px 12px;color:var(--text);font-family:var(--fm);font-size:16px;font-weight:700;outline:none;"
+        oninput="calcTInc()">
+      <span style="color:var(--dim);font-size:16px;">×</span>
       <input type="number" id="sellQtyInput" placeholder="매도 수량(주)" 
         style="flex:1;background:var(--sf);border:1px solid var(--bd);border-radius:8px;padding:10px 12px;color:var(--sell);font-family:var(--fm);font-size:16px;font-weight:700;outline:none;"
         oninput="calcTInc()">
       <div style="display:flex;align-items:center;gap:6px;padding:10px;background:var(--sf);border:1px solid var(--bd);border-radius:8px;">
         <input type="checkbox" id="applySellT" onchange="calcTInc()" style="width:18px;height:18px;accent-color:var(--sell);">
-        <span style="font-size:13px;color:var(--dim);white-space:nowrap;">T값 자동 차감 반영</span>
+        <span style="font-size:13px;color:var(--dim);white-space:nowrap;">T값 차감</span>
       </div>
     </div>
 
@@ -514,6 +517,7 @@ function onDateChange(){
 
 function resetNightSection(){
   initTRows();
+  document.getElementById('sellPriceInput').value='';
   document.getElementById('sellQtyInput').value='';
   document.getElementById('applySellT').checked=false;
   document.getElementById('totalAmt').textContent='$0.00';
@@ -924,13 +928,13 @@ function calcTInc(){
   const P=parseFloat(document.getElementById('principal').value)||0;
   const remain = P - S*avg;
 
-  // 매도 입력값 가져오기
+  // 매도 입력값 가져오기 (가격 입력칸 부활 반영)
   const sellSh = parseFloat(document.getElementById('sellQtyInput').value)||0;
   const applySell = document.getElementById('applySellT').checked;
 
   // 새 보유주수 & 평단가 (매수, 매도 동시 반영)
   const nS = S + totalSh - (applySell ? sellSh : 0);
-  const nA = totalSh > 0 ? (S*avg + totalAmt)/(S+totalSh) : avg; // 평단가는 매수시에만 변동
+  const nA = totalSh > 0 ? (S*avg + totalAmt)/(S+totalSh) : avg; 
   
   if (nS > 0 || totalSh > 0) {
     document.getElementById('newShares').textContent=nS+'주';
