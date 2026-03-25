@@ -261,20 +261,15 @@ input[type=checkbox]{width:18px;height:18px;accent-color:var(--buy);cursor:point
     <div id="tCalcRows"></div>
     <button class="btn bs bsm" onclick="addTRow()" style="width:100%;margin-top:8px;border-color:#2a2a6a;color:#9090ff;">+ 체결 행 추가</button>
 
-    <div id="normalEveningOpt" style="display:flex;align-items:center;gap:12px;margin-top:12px;padding:12px;background:var(--sf);border-radius:10px;">
-      <input type="checkbox" id="qSellDone" onchange="calcTInc()" style="width:18px;height:18px;accent-color:var(--pink);">
-      <span style="font-size:14px;color:var(--dim);">쿼터매도 체결됨 → T × 0.75 적용</span>
-    </div>
-
-    <div id="reverseEveningOpt" style="display:none; flex-direction:column; gap:8px; margin-top:12px; padding:12px; background:#1a1000; border:1px solid #804a00; border-radius:10px;">
-      <div style="font-size:12px; color:#ffaa00; margin-bottom:4px; font-weight:bold;">🔄 리버스모드 T값 계산기</div>
-      <div style="display:flex;align-items:center;gap:10px;">
-        <input type="checkbox" id="revSellDone" onchange="calcTInc()" style="width:18px;height:18px;accent-color:var(--sell);">
-        <span style="font-size:13px;color:var(--text);">매도 체결됨 <span style="color:var(--dim);">(T × 0.95)</span></span>
-      </div>
-      <div style="display:flex;align-items:center;gap:10px;">
-        <input type="checkbox" id="revBuyDone" onchange="calcTInc()" style="width:18px;height:18px;accent-color:var(--buy);">
-        <span style="font-size:13px;color:var(--text);">매수 체결됨 <span style="color:var(--dim);">(T + 남은회차×0.25)</span></span>
+    <div class="div" style="margin:20px 0;"></div>
+    <div class="lbl" style="margin:0 0 8px 0; color:var(--sell);">📤 매도 체결 입력 (쿼터/리버스)</div>
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;">
+      <input type="number" id="sellQtyInput" placeholder="매도 수량(주)" 
+        style="flex:1;background:var(--sf);border:1px solid var(--bd);border-radius:8px;padding:10px 12px;color:var(--sell);font-family:var(--fm);font-size:16px;font-weight:700;outline:none;"
+        oninput="calcTInc()">
+      <div style="display:flex;align-items:center;gap:6px;padding:10px;background:var(--sf);border:1px solid var(--bd);border-radius:8px;">
+        <input type="checkbox" id="applySellT" onchange="calcTInc()" style="width:18px;height:18px;accent-color:var(--sell);">
+        <span style="font-size:13px;color:var(--dim);white-space:nowrap;">T값 자동 차감 반영</span>
       </div>
     </div>
 
@@ -283,8 +278,7 @@ input[type=checkbox]{width:18px;height:18px;accent-color:var(--buy);cursor:point
       <div class="cr"><span class="cn">체결 총 주수</span><span class="cv2" id="totalShares" style="color:var(--buy);">0주</span></div>
       <div class="cr"><span class="cn">새 보유 주수</span><span class="cv2" id="newShares">—</span></div>
       <div class="cr"><span class="cn">새 평균단가</span><span class="cv2" id="newAvg">—</span></div>
-      <div class="cr" id="tIncRow"><span class="cn">T 증가분</span><span class="cv2" id="tInc" style="color:var(--gold);">—</span></div>
-      <div class="cr" id="afterQTRow" style="border:none;"><span class="cn" style="color:var(--pink);">쿼터매도 후 T값</span><span class="cv2" id="afterQT" style="color:var(--pink);">—</span></div>
+      <div class="cr" id="tIncRow"><span class="cn">T 변화</span><span class="cv2" id="tInc" style="color:var(--gold);">—</span></div>
     </div>
 
     <div class="nextt">
@@ -304,13 +298,10 @@ input[type=checkbox]{width:18px;height:18px;accent-color:var(--buy);cursor:point
         style="background:transparent;border:none;outline:none;font-family:var(--fm);font-size:20px;font-weight:700;color:var(--text);width:100%;">
     </div>
     <div style="background:var(--sf);border:1px solid var(--bd);border-radius:12px;padding:14px;">
-      <div class="cl">체결 매도 (주)</div>
-      <input type="number" id="execSell" placeholder="0"
-        style="background:transparent;border:none;outline:none;font-family:var(--fm);font-size:20px;font-weight:700;color:var(--sell);width:100%;">
+      <div class="cl">메모</div>
+      <textarea id="notes" style="background:transparent;border:none;color:var(--text);width:100%;font-size:14px;outline:none;resize:none;height:100%;" placeholder="특이사항..."></textarea>
     </div>
   </div>
-  <div class="lbl" style="margin-top:0;">메모</div>
-  <textarea style="background:var(--sf);border:1px solid var(--bd);border-radius:12px;padding:14px;width:100%;min-height:75px;color:var(--text);font-family:var(--fb);font-size:14px;resize:vertical;outline:none;" id="notes" placeholder="특이사항, 시장 상황, 느낀점..."></textarea>
 </div>
 
 <div class="savebar">
@@ -523,15 +514,14 @@ function onDateChange(){
 
 function resetNightSection(){
   initTRows();
-  document.getElementById('qSellDone').checked=false;
-  document.getElementById('revSellDone').checked=false;
-  document.getElementById('revBuyDone').checked=false;
+  document.getElementById('sellQtyInput').value='';
+  document.getElementById('applySellT').checked=false;
   document.getElementById('totalAmt').textContent='$0.00';
   document.getElementById('totalShares').textContent='0주';
-  ['newShares','newAvg','tInc','afterQT'].forEach(id=>document.getElementById(id).textContent='—');
+  ['newShares','newAvg','tInc'].forEach(id=>document.getElementById(id).textContent='—');
   document.getElementById('nextT').textContent='—';
   document.getElementById('nextTSub').textContent='';
-  ['closePrice','execSell','notes'].forEach(id=>document.getElementById(id).value='');
+  ['closePrice','notes'].forEach(id=>document.getElementById(id).value='');
   
   const btn=document.querySelector('[onclick="applyNextT()"]');
   if(btn){
@@ -622,7 +612,6 @@ async function saveToday(){
     curPrice:document.getElementById('curPrice').value,
     tVal:document.getElementById('tVal').value,
     closePrice:document.getElementById('closePrice').value,
-    execSell:document.getElementById('execSell').value,
     notes:document.getElementById('notes').value,
     isReverseMode: isRev,
     c1:document.getElementById('c1').checked,c2:document.getElementById('c2').checked,
@@ -701,7 +690,6 @@ function fillForm(r){
   if(r.curPrice)document.getElementById('curPrice').value=r.curPrice;
   if(r.tVal)document.getElementById('tVal').value=r.tVal;
   if(r.closePrice)document.getElementById('closePrice').value=r.closePrice;
-  if(r.execSell)document.getElementById('execSell').value=r.execSell;
   if(r.notes)document.getElementById('notes').value=r.notes;
   document.getElementById('isReverseMode').checked = r.isReverseMode || false;
   ['c1','c2','c3','c4','c5'].forEach(id=>document.getElementById(id).checked=r[id]||false);
@@ -733,11 +721,6 @@ function calcAll(){
   if(!isRev){
     const isBack=T>=a/2;
     const isSoJin=T>=a-1;
-    document.getElementById('normalEveningOpt').style.display='flex';
-    document.getElementById('reverseEveningOpt').style.display='none';
-    document.getElementById('tIncRow').style.display='flex';
-    document.getElementById('afterQTRow').style.display='flex';
-
     if (isSoJin) toast("🚨 T값이 소진되었습니다! 리버스 모드를 켜주세요.");
 
     let sp;
@@ -772,7 +755,6 @@ function calcAll(){
 
     buildBuyTable(bAmt,starPoint,avg,isBack);
     
-    // 일반모드 매도표 그리기 (체크박스 복구)
     document.getElementById('sellBody').innerHTML=`
       <tr>
         <td><span class="tag tq">쿼터매도</span></td><td><span class="tag tl">LOC</span></td>
@@ -789,11 +771,6 @@ function calcAll(){
   }
   // 2️⃣ 리버스 모드
   else {
-    document.getElementById('normalEveningOpt').style.display='none';
-    document.getElementById('reverseEveningOpt').style.display='flex';
-    document.getElementById('tIncRow').style.display='none';
-    document.getElementById('afterQTRow').style.display='none';
-
     const modeEl=document.getElementById('d_mode');
     if (pct >= -20 && avg > 0) {
       modeEl.innerHTML='<span style="color:#4cdd8a;font-size:13px;line-height:1.2;">🟢 수익 -20% 돌파!<br>리버스모드 끄세요!</span>';
@@ -825,9 +802,8 @@ function calcAll(){
     document.getElementById('modeGuide').innerHTML=`리버스 매수: 1회매수액 전체를 <span>별지점 LOC 매수</span> (일반 후반전과 동일 표)`;
     document.getElementById('sellGuide').innerHTML=`리버스 매도: 보유량의 <span>${a/2}등분</span>을 별지점 위에서 <span>LOC 매도</span> (첫날은 MOC)`;
 
-    buildBuyTable(bAmt, starPoint, avg, true); // 리버스는 항상 후반전(전액 별지점 매수) 로직과 동일
+    buildBuyTable(bAmt, starPoint, avg, true); 
     
-    // 리버스모드 매도표 그리기 (체크박스 복구)
     document.getElementById('sellBody').innerHTML=`
       <tr>
         <td><span class="tag trev">Reverse</span></td><td><span class="tag tl">LOC</span></td>
@@ -865,7 +841,7 @@ function makeAddPrices(base,isFront,count){
   return prices;
 }
 
-// 매수표 그리기 (체크박스 복구)
+// 매수표 그리기
 function buildBuyTable(bAmt,starPoint,avg,isBack){
   const tbody=document.getElementById('buyBody');
   tbody.innerHTML='';
@@ -928,6 +904,8 @@ function removeTRow(id){
 
 function calcTInc(){
   const isRev = document.getElementById('isReverseMode').checked;
+  
+  // 매수 체결 계산
   let totalAmt=0, totalSh=0;
   document.querySelectorAll('[id^="tp_"]').forEach(el=>{
     const rid=el.id.replace('tp_','');
@@ -937,6 +915,8 @@ function calcTInc(){
   });
   document.getElementById('totalAmt').textContent='$'+totalAmt.toFixed(2);
   document.getElementById('totalShares').textContent=totalSh+'주';
+  
+  // 기본 설정값
   const S=parseFloat(document.getElementById('shares').value)||0;
   const avg=parseFloat(document.getElementById('avgPrice').value)||0;
   const T=parseFloat(document.getElementById('tVal').value)||0;
@@ -944,8 +924,15 @@ function calcTInc(){
   const P=parseFloat(document.getElementById('principal').value)||0;
   const remain = P - S*avg;
 
-  if(totalSh>0&&S>0&&avg>0){
-    const nS=S+totalSh, nA=(S*avg+totalAmt)/nS;
+  // 매도 입력값 가져오기
+  const sellSh = parseFloat(document.getElementById('sellQtyInput').value)||0;
+  const applySell = document.getElementById('applySellT').checked;
+
+  // 새 보유주수 & 평단가 (매수, 매도 동시 반영)
+  const nS = S + totalSh - (applySell ? sellSh : 0);
+  const nA = totalSh > 0 ? (S*avg + totalAmt)/(S+totalSh) : avg; // 평단가는 매수시에만 변동
+  
+  if (nS > 0 || totalSh > 0) {
     document.getElementById('newShares').textContent=nS+'주';
     document.getElementById('newAvg').textContent='$'+nA.toFixed(2);
   } else {
@@ -957,24 +944,48 @@ function calcTInc(){
 
   if(!isRev){
     const bAmt=a-T>0&&remain>0?remain/(a-T):0;
-    if(totalAmt<=0||bAmt<=0){
-      ['tInc','afterQT'].forEach(id=>document.getElementById(id).textContent='—');
+    
+    // 매수 T값 더하기
+    if(totalAmt>0 && bAmt>0){
+      nT = T + totalAmt/bAmt;
+    }
+    
+    // 매도 T값 차감하기
+    if(applySell) {
+      nT = nT * 0.75;
+      document.getElementById('tInc').textContent = '쿼터매도(0.75x)';
+      document.getElementById('tInc').style.color = 'var(--pink)';
+    } else {
+      document.getElementById('tInc').textContent = totalAmt>0 ? '+'+(totalAmt/bAmt).toFixed(4)+'T' : '—';
+      document.getElementById('tInc').style.color = 'var(--gold)';
+    }
+
+    if(totalAmt<=0 && bAmt<=0 && !applySell){
       document.getElementById('nextT').textContent='—';
       document.getElementById('nextTSub').textContent='';
       return;
     }
-    nT=T+totalAmt/bAmt;
-    document.getElementById('tInc').textContent='+'+(totalAmt/bAmt).toFixed(4)+'T';
-    const qDone=document.getElementById('qSellDone').checked;
-    if(qDone){const aq=nT*0.75;document.getElementById('afterQT').textContent=aq.toFixed(4)+'T';nT=aq;}
-    else document.getElementById('afterQT').textContent='—';
+
     document.getElementById('nextT').textContent=nT.toFixed(4)+'T';
     const isBack=nT>=a/2;
     document.getElementById('nextTSub').textContent=isBack?'🔴 후반전':'🟢 전반전';
     document.getElementById('nextTSub').style.color=isBack?'#ff7070':'#4cdd8a';
   } else {
-    if(document.getElementById('revSellDone').checked){ nT = nT * 0.95; }
-    if(document.getElementById('revBuyDone').checked){ nT = nT + (a - nT) * 0.25; }
+    // 리버스 매도 차감 (0.95x)
+    if(applySell){ 
+      nT = nT * 0.95; 
+      document.getElementById('tInc').textContent = '리버스매도(0.95x)';
+      document.getElementById('tInc').style.color = 'var(--sell)';
+    } else {
+      document.getElementById('tInc').textContent = '—';
+    }
+    
+    // 리버스 매수 가중치 더하기 (a-T * 0.25)
+    if(totalSh > 0){ 
+      nT = nT + (a - nT) * 0.25; 
+      document.getElementById('tInc').textContent = '리버스매수(+가중치)';
+      document.getElementById('tInc').style.color = 'var(--buy)';
+    }
     
     document.getElementById('nextT').textContent=nT.toFixed(4)+'T';
     document.getElementById('nextTSub').textContent='🔄 리버스 모드 진행 중';
