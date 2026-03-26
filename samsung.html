@@ -523,7 +523,7 @@ function resetNightSection(){
   
   const btn=document.querySelector('[onclick="applyNextT()"]');
   if(btn){
-    btn.textContent='✅ 저녁 기록 저장 (내일 아침에 이어받기 하세요!)';
+    btn.textContent='✅ 장마감 기록 저장 (내일 아침에 이어받기 하세요!)';
     btn.style.background='var(--gold)';
     btn.style.color='#000';
     btn.style.border='none';
@@ -619,9 +619,15 @@ async function saveToday(){
 
   const starPoint=avg>0?avg*1.025:0; 
   const ret=avg>0&&cur>0?(cur-avg)/avg*100:null;
-  const nextTTxt=document.getElementById('nextT').textContent.replace('T','').trim();
-  const newSharesTxt=document.getElementById('newShares').textContent.replace('주','').trim();
-  const newAvgTxt=document.getElementById('newAvg').textContent.replace('₩','').replace(/,/g,'').trim();
+  
+  // 🚨 [버그 해결] 숫자, 소수점, 마이너스 기호만 정확하게 추출하도록 수정
+  const nextT_raw = document.getElementById('nextT').textContent;
+  const newShares_raw = document.getElementById('newShares').textContent;
+  const newAvg_raw = document.getElementById('newAvg').textContent;
+
+  const nextTTxt = nextT_raw.includes('—') ? '' : nextT_raw.replace(/[^0-9.-]/g, '');
+  const newSharesTxt = newShares_raw.includes('—') ? '' : newShares_raw.replace(/[^0-9.-]/g, '');
+  const newAvgTxt = newAvg_raw.includes('—') ? '' : newAvg_raw.replace(/[^0-9.-]/g, '');
   
   const r={
     sheetName: "Samsung", // 🚨 구글 시트 Samsung 탭으로 전송
@@ -637,9 +643,9 @@ async function saveToday(){
     c1:document.getElementById('c1')?.checked,c2:document.getElementById('c2')?.checked,
     c3:document.getElementById('c3')?.checked,c4:document.getElementById('c4')?.checked,
     starPoint,returnPct:ret,
-    nextT:nextTTxt&&nextTTxt!=='—'?nextTTxt:null,
-    newShares:newSharesTxt&&newSharesTxt!=='—'?newSharesTxt:null,
-    newAvg:newAvgTxt&&newAvgTxt!=='—'?newAvgTxt:null,
+    nextT:nextTTxt ? nextTTxt : null,
+    newShares:newSharesTxt ? newSharesTxt : null,
+    newAvg:newAvgTxt ? newAvgTxt : null,
     savedAt:new Date().toISOString()
   };
   
