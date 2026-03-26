@@ -395,7 +395,7 @@ input[type=checkbox]{width:18px;height:18px;accent-color:var(--buy);cursor:point
   </div>
   <div class="card" style="padding:0;overflow-x:auto;">
     <table class="tt">
-      <thead><tr><th>날짜</th><th>종목</th><th>T값</th><th>내일T</th><th>평단</th><th>주수</th><th>수익률</th><th>종가</th><th></th></tr></thead>
+      <thead><tr><th>날짜</th><th>종목</th><th>T값(시작)</th><th>T값(마감)</th><th>평단(마감)</th><th>주수(마감)</th><th>수익률</th><th>종가</th><th></th></tr></thead>
       <tbody id="histBody"></tbody>
     </table>
   </div>
@@ -620,7 +620,7 @@ async function saveToday(){
   const starPoint=avg>0?avg*1.025:0; 
   const ret=avg>0&&cur>0?(cur-avg)/avg*100:null;
   
-  // 🚨 [버그 해결] 숫자, 소수점, 마이너스 기호만 정확하게 추출하도록 수정
+  // 🚨 [숫자 완벽 추출] (콤마, 텍스트 날리고 숫자만 남김)
   const nextT_raw = document.getElementById('nextT').textContent;
   const newShares_raw = document.getElementById('newShares').textContent;
   const newAvg_raw = document.getElementById('newAvg').textContent;
@@ -630,7 +630,7 @@ async function saveToday(){
   const newAvgTxt = newAvg_raw.includes('—') ? '' : newAvg_raw.replace(/[^0-9.-]/g, '');
   
   const r={
-    sheetName: "Samsung", // 🚨 구글 시트 Samsung 탭으로 전송
+    sheetName: "Samsung", // 구글 시트 Samsung 탭으로 전송
     date,ticker:tk,splitNum:document.getElementById('splitNum').value,
     principal:document.getElementById('principal').value,
     shares:document.getElementById('shares').value,
@@ -668,12 +668,12 @@ async function saveToday(){
   }
 }
 
-// 🚨 서버 동기화 시 Samsung 시트만 불러오기
+// 서버 동기화 시 Samsung 시트만 불러오기
 async function syncFromCloud(){
   const el = document.getElementById('saveStatus');
   el.textContent = "🔄 서버 동기화 중...";
   try {
-    const response = await fetch(WEB_APP_URL + "?sheetName=Samsung"); // 🚨 Samsung 파라미터 추가
+    const response = await fetch(WEB_APP_URL + "?sheetName=Samsung"); 
     const textData = await response.text();
     let data;
     try {
@@ -733,6 +733,20 @@ function fillForm(r){
   document.getElementById('isReverseMode').checked = r.isReverseMode || false;
   ['c1','c2','c3','c4'].forEach(id=>{if(document.getElementById(id)) document.getElementById(id).checked=r[id]||false;});
   calcAll();
+
+  // 🚨 [현황판 멍청함 해결] 불러올 때 마감데이터(newShares)가 있으면 현황에 즉시 띄워줍니다!
+  if(r.newShares) {
+     document.getElementById('newShares').textContent = r.newShares + '주';
+     document.getElementById('d_shares').textContent = r.newShares + '주';
+  }
+  if(r.newAvg) {
+     document.getElementById('newAvg').textContent = '₩' + Math.floor(r.newAvg).toLocaleString();
+     document.getElementById('d_avg').textContent = '₩' + Math.floor(r.newAvg).toLocaleString();
+  }
+  if(r.nextT) {
+     document.getElementById('nextT').textContent = r.nextT + 'T';
+     document.getElementById('d_t').textContent = parseFloat(r.nextT).toFixed(4) + 'T';
+  }
 }
 
 // ─── CALC ───
@@ -862,7 +876,11 @@ function calcAll(){
 
   document.getElementById('d_avg').textContent=avg>0?'₩'+Math.floor(avg).toLocaleString():'—';
   document.getElementById('d_remain').textContent=remain>=0?'₩'+Math.floor(remain).toLocaleString():'—';
-  document.getElementById('d_shares').textContent=S>0?S+'주':'—';
+  
+  // 기본적으로 아침 주수(S)를 보여주지만, 저녁 마감 데이터가 세팅되었다면 덮어쓰지 않음
+  if(document.getElementById('newShares').textContent === '—') {
+     document.getElementById('d_shares').textContent=S>0?S+'주':'—';
+  }
   document.getElementById('d_buyamt').textContent=bAmt>0?'₩'+Math.floor(bAmt).toLocaleString():'—';
   document.getElementById('dashDateDisp').textContent=document.getElementById('recDate').value||'';
 
@@ -967,12 +985,19 @@ function calcTInc(){
   const nS = S + totalSh - (applySell ? sellSh : 0);
   const nA = totalSh > 0 ? (S*avg + totalAmt)/(S+totalSh) : avg; 
   
+  // 🚨 [현황판 멍청함 해결] 매수/매도 입력 즉시 현황판까지 다이렉트로 업데이트!
   if (nS > 0 || totalSh > 0) {
     document.getElementById('newShares').textContent=nS+'주';
     document.getElementById('newAvg').textContent='₩'+Math.floor(nA).toLocaleString();
+    
+    document.getElementById('d_shares').textContent=nS+'주';
+    document.getElementById('d_avg').textContent='₩'+Math.floor(nA).toLocaleString();
   } else {
     document.getElementById('newShares').textContent='—';
     document.getElementById('newAvg').textContent='—';
+    
+    document.getElementById('d_shares').textContent=S>0?S+'주':'—';
+    document.getElementById('d_avg').textContent=avg>0?'₩'+Math.floor(avg).toLocaleString():'—';
   }
 
   let nT = T;
@@ -996,10 +1021,13 @@ function calcTInc(){
     if(totalAmt<=0 && bAmt<=0 && !applySell){
       document.getElementById('nextT').textContent='—';
       document.getElementById('nextTSub').textContent='';
+      document.getElementById('d_t').textContent=T>0?T.toFixed(4)+'T':'—'; 
       return;
     }
 
     document.getElementById('nextT').textContent=nT.toFixed(4)+'T';
+    document.getElementById('d_t').textContent=nT.toFixed(4)+'T'; // 현황판 T값 즉시 반영
+
     const isBack=nT>=a/2;
     document.getElementById('nextTSub').textContent=isBack?'🔴 후반전':'🟢 전반전';
     document.getElementById('nextTSub').style.color=isBack?'#ff7070':'#4cdd8a';
@@ -1019,6 +1047,8 @@ function calcTInc(){
     }
     
     document.getElementById('nextT').textContent=nT.toFixed(4)+'T';
+    document.getElementById('d_t').textContent=nT.toFixed(4)+'T'; // 현황판 T값 즉시 반영
+
     document.getElementById('nextTSub').textContent='🔄 리버스 모드 진행 중';
     document.getElementById('nextTSub').style.color='#ffaa00';
   }
@@ -1086,6 +1116,7 @@ function renderCharts(){
 }
 
 // ─── HISTORY ───
+// 🚨 [히스토리 멍청함 해결] 무조건 '마감'된 업데이트 결과값을 우선 보여주도록 수정!
 function renderHist(){
   const recs=getRecs();
   const q=(document.getElementById('histSearch').value||'').toLowerCase();
@@ -1098,12 +1129,17 @@ function renderHist(){
     const ps=p!=null?`<span class="${parseFloat(p)>=0?'pp':'pn'}">${parseFloat(p)>=0?'+':''}${parseFloat(p).toFixed(2)}%</span>`:'—';
     const tr=document.createElement('tr');
     tr.onclick=()=>openMo(date);
+
+    const hT = r.nextT ? parseFloat(r.nextT).toFixed(2) : (r.tVal ? parseFloat(r.tVal).toFixed(2) : '—');
+    const hAvg = r.newAvg ? r.newAvg : (r.avgPrice || 0);
+    const hShares = r.newShares ? r.newShares : (r.shares || '—');
+
     tr.innerHTML=`<td style="color:var(--gold);font-weight:700;">${date}</td>
       <td>${r.ticker||'—'}</td>
       <td style="color:var(--blue);font-family:var(--fm);">${r.tVal?parseFloat(r.tVal).toFixed(2):'—'}</td>
-      <td style="color:#9090ff;font-family:var(--fm);">${r.nextT?parseFloat(r.nextT).toFixed(2):'—'}</td>
-      <td style="font-family:var(--fm);">${r.avgPrice?'₩'+Math.floor(r.avgPrice).toLocaleString():'—'}</td>
-      <td style="font-family:var(--fm);">${r.shares||'—'}주</td>
+      <td style="color:#9090ff;font-family:var(--fm);">${hT}</td>
+      <td style="font-family:var(--fm);">${hAvg ? '₩'+Math.floor(hAvg).toLocaleString() : '—'}</td>
+      <td style="font-family:var(--fm);">${hShares}주</td>
       <td>${ps}</td>
       <td style="font-family:var(--fm);">${r.closePrice?'₩'+Math.floor(r.closePrice).toLocaleString():'—'}</td>
       <td><button class="btn bd2 bsm" onclick="event.stopPropagation();cDel('${date}')">🗑️</button></td>`;
