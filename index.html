@@ -396,7 +396,7 @@ input[type=checkbox]{width:18px;height:18px;accent-color:var(--buy);cursor:point
   </div>
   <div class="card" style="padding:0;overflow-x:auto;">
     <table class="tt">
-      <thead><tr><th>날짜</th><th>종목</th><th>T값</th><th>내일T</th><th>평단</th><th>주수</th><th>수익률</th><th>종가</th><th></th></tr></thead>
+      <thead><tr><th>날짜</th><th>종목</th><th>T값(시작)</th><th>T값(마감)</th><th>평단(마감)</th><th>주수(마감)</th><th>수익률</th><th>종가</th><th></th></tr></thead>
       <tbody id="histBody"></tbody>
     </table>
   </div>
@@ -501,19 +501,16 @@ function sw(tab){
 function getRecs(){try{return JSON.parse(localStorage.getItem(SK))||{};}catch{return{};}}
 function setRecs(r){localStorage.setItem(SK,JSON.stringify(r));}
 
-// ─── DATE CHANGE ───
 function onDateChange(){
   const date=document.getElementById('recDate').value;
   document.getElementById('inputDateDisp').textContent=date;
-  ['c1','c2','c3','c4','c5'].forEach(id=>document.getElementById(id).checked=false);
   resetNightSection();
   checkCarry(); renderTHist(); loadToday();
 }
 
-// 🚨 사장님 요청: 당일 입력 데이터 완벽 초기화!
 function resetNightSection(){
   initTRows();
-  document.getElementById('curPrice').value=''; // 현재가 비우기
+  document.getElementById('curPrice').value=''; 
   document.getElementById('sellPriceInput').value='';
   document.getElementById('sellQtyInput').value='';
   document.getElementById('applySellT').checked=false;
@@ -522,7 +519,7 @@ function resetNightSection(){
   ['newShares','newAvg','tInc'].forEach(id=>document.getElementById(id).textContent='—');
   document.getElementById('nextT').textContent='—';
   document.getElementById('nextTSub').textContent='';
-  ['closePrice','notes'].forEach(id=>document.getElementById(id).value=''); // 종가, 메모 비우기
+  ['closePrice','notes'].forEach(id=>document.getElementById(id).value=''); 
   
   const btn=document.querySelector('[onclick="applyNextT()"]');
   if(btn){
@@ -587,10 +584,7 @@ function carryFromPrev(isForce){
   const date=document.getElementById('recDate').value;
   const recs=getRecs();
   const prev=getPrevDate(date,recs);
-  if(!prev) {
-      toast('불러올 이전 날짜 기록이 없습니다.');
-      return;
-  }
+  if(!prev) return;
   
   if(isForce && recs[date]) {
       if(!confirm(`이미 ${date} 데이터가 있습니다.\n${prev} 데이터를 다시 덮어씌우시겠습니까?\n(현재 화면에 입력된 오늘 데이터는 초기화됩니다)`)) return;
@@ -598,40 +592,39 @@ function carryFromPrev(isForce){
 
   const r=recs[prev];
   
-  // 🚨 1. 기초 설정값(뼈대)만 끌어오기
   document.getElementById('ticker').value=r.ticker||'SOXL';
   document.getElementById('splitNum').value=r.splitNum||'40';
   document.getElementById('principal').value=r.principal||'';
   document.getElementById('shares').value=r.newShares||r.shares||'';
-  document.getElementById('avgPrice').value=r.newAvg?parseFloat(r.newAvg).toFixed(2):r.avgPrice||'';
+  document.getElementById('avgPrice').value=r.newAvg?parseFloat(r.newAvg).toFixed(2):(r.avgPrice||'');
   document.getElementById('tVal').value=r.nextT||r.tVal||'';
   document.getElementById('isReverseMode').checked = r.isReverseMode || false;
   
-  // 🚨 2. 당일 입력칸(살)은 완벽하게 백지로 만들기!
   resetNightSection();
-
   document.getElementById('carryBanner').style.display='none';
   calcAll(); 
   toast(`📥 ${prev} 데이터 이어받기 완료!`);
 }
 
 // ─── 🚀 SAVE / LOAD ───
+// 🚨 전역 변수로 저장할 때 사용할 숫자 보관 (버그 원천 차단)
+let _globalNewShares = null;
+let _globalNewAvg = null;
+let _globalNextT = null;
+
 async function saveToday(){
   const date=document.getElementById('recDate').value;
   if(!date){toast('날짜를 입력해주세요');return;}
   const avg=parseFloat(document.getElementById('avgPrice').value)||0;
   const cur=parseFloat(document.getElementById('curPrice').value)||0;
-  const T=parseFloat(document.getElementById('tVal').value)||0;
   const a=parseInt(document.getElementById('splitNum').value)||40;
   const tk=document.getElementById('ticker').value;
+  const T=parseFloat(document.getElementById('tVal').value)||0;
   const isRev = document.getElementById('isReverseMode').checked;
 
   let sp; if(tk==='SOXL')sp=a===20?(20-2*T):(20-T); else sp=a===20?(15-1.5*T):(15-0.75*T);
   const starPoint=avg>0?avg*(1+sp/100):0;
   const ret=avg>0&&cur>0?(cur-avg)/avg*100:null;
-  const nextTTxt=document.getElementById('nextT').textContent.replace('T','').trim();
-  const newSharesTxt=document.getElementById('newShares').textContent.replace('주','').trim();
-  const newAvgTxt=document.getElementById('newAvg').textContent.replace('$','').trim();
   
   const r={
     date,ticker:tk,splitNum:document.getElementById('splitNum').value,
@@ -643,19 +636,19 @@ async function saveToday(){
     closePrice:document.getElementById('closePrice').value,
     notes:document.getElementById('notes').value,
     isReverseMode: isRev,
-    c1:document.getElementById('c1').checked,c2:document.getElementById('c2').checked,
-    c3:document.getElementById('c3').checked,c4:document.getElementById('c4').checked,
-    c5:document.getElementById('c5').checked,
+    c1:document.getElementById('c1')?.checked,c2:document.getElementById('c2')?.checked,
+    c3:document.getElementById('c3')?.checked,c4:document.getElementById('c4')?.checked,
+    c5:document.getElementById('c5')?.checked,
     starPoint,returnPct:ret,
-    nextT:nextTTxt&&nextTTxt!=='—'?nextTTxt:null,
-    newShares:newSharesTxt&&newSharesTxt!=='—'?newSharesTxt:null,
-    newAvg:newAvgTxt&&newAvgTxt!=='—'?newAvgTxt:null,
+    nextT: _globalNextT !== null ? _globalNextT : null,
+    newShares: _globalNewShares !== null ? _globalNewShares : null,
+    newAvg: _globalNewAvg !== null ? _globalNewAvg : null,
     savedAt:new Date().toISOString()
   };
   
   const recs=getRecs();recs[date]=r;setRecs(recs);
   renderTHist();
-  checkCarry(); // 저장 후 배너 텍스트 갱신
+  checkCarry(); 
   const el=document.getElementById('saveStatus');
   el.textContent=`✓ 로컬 저장됨 (${new Date().toLocaleTimeString('ko-KR')})`;
   el.className='ss ok';
@@ -688,7 +681,7 @@ async function syncFromCloud(){
     if(Array.isArray(data) && data.length > 0) {
       const recs = getRecs();
       data.forEach(item => { 
-        if(item.date) {
+        if(item.date && item.ticker !== '삼성전자') { // 🚨 SOXL은 삼성전자 아닌것만 가져옴
           const dateStr = String(item.date);
           const cleanDate = dateStr.includes('T') ? dateStr.split('T')[0] : dateStr;
           item.date = cleanDate; 
@@ -734,8 +727,33 @@ function fillForm(r){
   if(r.closePrice)document.getElementById('closePrice').value=r.closePrice;
   if(r.notes)document.getElementById('notes').value=r.notes;
   document.getElementById('isReverseMode').checked = r.isReverseMode || false;
-  ['c1','c2','c3','c4','c5'].forEach(id=>document.getElementById(id).checked=r[id]||false);
+  ['c1','c2','c3','c4','c5'].forEach(id=>{if(document.getElementById(id)) document.getElementById(id).checked=r[id]||false;});
   calcAll();
+
+  // 저장되어 있던 마감 데이터 복원
+  if(r.newShares) {
+     _globalNewShares = parseFloat(r.newShares);
+     document.getElementById('newShares').textContent = _globalNewShares + '주';
+     document.getElementById('d_shares').textContent = _globalNewShares + '주';
+  } else {
+     _globalNewShares = null;
+  }
+
+  if(r.newAvg) {
+     _globalNewAvg = parseFloat(r.newAvg);
+     document.getElementById('newAvg').textContent = '$' + _globalNewAvg.toFixed(2);
+     document.getElementById('d_avg').textContent = '$' + _globalNewAvg.toFixed(2);
+  } else {
+     _globalNewAvg = null;
+  }
+
+  if(r.nextT) {
+     _globalNextT = parseFloat(r.nextT);
+     document.getElementById('nextT').textContent = _globalNextT.toFixed(4) + 'T';
+     document.getElementById('d_t').textContent = _globalNextT.toFixed(4) + 'T';
+  } else {
+     _globalNextT = null;
+  }
 }
 
 // ─── CALC ───
@@ -867,9 +885,12 @@ function calcAll(){
   document.getElementById('d_pct').textContent=pctStr;
   document.getElementById('d_pct').style.color=pnlColor;
 
-  document.getElementById('d_avg').textContent=avg>0?'$'+avg.toFixed(2):'—';
+  // 🚨 현황 업데이트 마감 데이터 우선
+  if (_globalNewShares === null) {
+      document.getElementById('d_shares').textContent=S>0?S+'주':'—';
+      document.getElementById('d_avg').textContent=avg>0?'$'+avg.toFixed(2):'—';
+  }
   document.getElementById('d_remain').textContent=remain>=0?'$'+remain.toFixed(2):'—';
-  document.getElementById('d_shares').textContent=S>0?S+'주':'—';
   document.getElementById('d_buyamt').textContent=bAmt>0?'$'+bAmt.toFixed(2):'—';
   document.getElementById('dashDateDisp').textContent=document.getElementById('recDate').value||'';
 
@@ -949,7 +970,6 @@ function removeTRow(id){
 function calcTInc(){
   const isRev = document.getElementById('isReverseMode').checked;
   
-  // 매수 체결 계산
   let totalAmt=0, totalSh=0;
   document.querySelectorAll('[id^="tp_"]').forEach(el=>{
     const rid=el.id.replace('tp_','');
@@ -960,7 +980,6 @@ function calcTInc(){
   document.getElementById('totalAmt').textContent='$'+totalAmt.toFixed(2);
   document.getElementById('totalShares').textContent=totalSh+'주';
   
-  // 기본 설정값
   const S=parseFloat(document.getElementById('shares').value)||0;
   const avg=parseFloat(document.getElementById('avgPrice').value)||0;
   const T=parseFloat(document.getElementById('tVal').value)||0;
@@ -968,20 +987,31 @@ function calcTInc(){
   const P=parseFloat(document.getElementById('principal').value)||0;
   const remain = P - S*avg;
 
-  // 매도 입력값 가져오기
   const sellSh = parseFloat(document.getElementById('sellQtyInput').value)||0;
   const applySell = document.getElementById('applySellT').checked;
 
-  // 새 보유주수 & 평단가 (매수, 매도 동시 반영)
   const nS = S + totalSh - (applySell ? sellSh : 0);
   const nA = totalSh > 0 ? (S*avg + totalAmt)/(S+totalSh) : avg; 
   
-  if (nS > 0 || totalSh > 0) {
+  // 🚨 여기서 전역 변수에 숫자 바로 할당
+  if (nS > 0 || totalSh > 0 || applySell) {
+    _globalNewShares = nS;
+    _globalNewAvg = nA;
     document.getElementById('newShares').textContent=nS+'주';
     document.getElementById('newAvg').textContent='$'+nA.toFixed(2);
+    
+    // 현황판 즉시 반영
+    document.getElementById('d_shares').textContent=nS+'주';
+    document.getElementById('d_avg').textContent='$'+nA.toFixed(2);
   } else {
+    _globalNewShares = null;
+    _globalNewAvg = null;
     document.getElementById('newShares').textContent='—';
     document.getElementById('newAvg').textContent='—';
+    
+    // 초기화 시 현황판 복구
+    document.getElementById('d_shares').textContent=S>0?S+'주':'—';
+    document.getElementById('d_avg').textContent=avg>0?'$'+avg.toFixed(2):'—';
   }
 
   let nT = T;
@@ -989,12 +1019,10 @@ function calcTInc(){
   if(!isRev){
     const bAmt=a-T>0&&remain>0?remain/(a-T):0;
     
-    // 매수 T값 더하기
     if(totalAmt>0 && bAmt>0){
       nT = T + totalAmt/bAmt;
     }
     
-    // 매도 T값 차감하기
     if(applySell) {
       nT = nT * 0.75;
       document.getElementById('tInc').textContent = '쿼터매도(0.75x)';
@@ -1005,17 +1033,21 @@ function calcTInc(){
     }
 
     if(totalAmt<=0 && bAmt<=0 && !applySell){
+      _globalNextT = null;
       document.getElementById('nextT').textContent='—';
       document.getElementById('nextTSub').textContent='';
+      document.getElementById('d_t').textContent=T>0?T.toFixed(4)+'T':'—'; 
       return;
     }
 
+    _globalNextT = nT;
     document.getElementById('nextT').textContent=nT.toFixed(4)+'T';
+    document.getElementById('d_t').textContent=nT.toFixed(4)+'T'; 
+
     const isBack=nT>=a/2;
     document.getElementById('nextTSub').textContent=isBack?'🔴 후반전':'🟢 전반전';
     document.getElementById('nextTSub').style.color=isBack?'#ff7070':'#4cdd8a';
   } else {
-    // 리버스 매도 차감 (0.95x)
     if(applySell){ 
       nT = nT * 0.95; 
       document.getElementById('tInc').textContent = '리버스매도(0.95x)';
@@ -1024,14 +1056,16 @@ function calcTInc(){
       document.getElementById('tInc').textContent = '—';
     }
     
-    // 리버스 매수 가중치 더하기 (a-T * 0.25)
     if(totalSh > 0){ 
       nT = nT + (a - nT) * 0.25; 
       document.getElementById('tInc').textContent = '리버스매수(+가중치)';
       document.getElementById('tInc').style.color = 'var(--buy)';
     }
     
+    _globalNextT = nT;
     document.getElementById('nextT').textContent=nT.toFixed(4)+'T';
+    document.getElementById('d_t').textContent=nT.toFixed(4)+'T'; 
+
     document.getElementById('nextTSub').textContent='🔄 리버스 모드 진행 중';
     document.getElementById('nextTSub').style.color='#ffaa00';
   }
@@ -1099,6 +1133,7 @@ function renderCharts(){
 }
 
 // ─── HISTORY ───
+// 🚨 [히스토리 멍청함 해결] 무조건 '마감'된 업데이트 결과값을 우선 보여주도록 수정!
 function renderHist(){
   const recs=getRecs();
   const q=(document.getElementById('histSearch').value||'').toLowerCase();
@@ -1111,12 +1146,17 @@ function renderHist(){
     const ps=p!=null?`<span class="${parseFloat(p)>=0?'pp':'pn'}">${parseFloat(p)>=0?'+':''}${parseFloat(p).toFixed(2)}%</span>`:'—';
     const tr=document.createElement('tr');
     tr.onclick=()=>openMo(date);
+
+    const hT = r.nextT ? parseFloat(r.nextT).toFixed(2) : (r.tVal ? parseFloat(r.tVal).toFixed(2) : '—');
+    const hAvg = r.newAvg ? r.newAvg : (r.avgPrice || 0);
+    const hShares = r.newShares ? r.newShares : (r.shares || '—');
+
     tr.innerHTML=`<td style="color:var(--gold);font-weight:700;">${date}</td>
       <td>${r.ticker||'—'}</td>
       <td style="color:var(--blue);font-family:var(--fm);">${r.tVal?parseFloat(r.tVal).toFixed(2):'—'}</td>
-      <td style="color:#9090ff;font-family:var(--fm);">${r.nextT?parseFloat(r.nextT).toFixed(2):'—'}</td>
-      <td style="font-family:var(--fm);">${r.avgPrice?'$'+parseFloat(r.avgPrice).toFixed(2):'—'}</td>
-      <td style="font-family:var(--fm);">${r.shares||'—'}주</td>
+      <td style="color:#9090ff;font-family:var(--fm);">${hT}</td>
+      <td style="font-family:var(--fm);">${hAvg ? '$'+parseFloat(hAvg).toFixed(2) : '—'}</td>
+      <td style="font-family:var(--fm);">${hShares}주</td>
       <td>${ps}</td>
       <td style="font-family:var(--fm);">${r.closePrice?'$'+parseFloat(r.closePrice).toFixed(2):'—'}</td>
       <td><button class="btn bd2 bsm" onclick="event.stopPropagation();cDel('${date}')">🗑️</button></td>`;
