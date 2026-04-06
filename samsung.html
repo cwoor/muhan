@@ -225,7 +225,7 @@ input[type=checkbox]{width:18px;height:18px;accent-color:var(--buy);cursor:point
   </div>
 
   <div class="cp" style="margin-bottom:8px;" id="morningPreview">
-    <div class="cr"><span class="cn" id="pv_star_lbl">⭐ 별지점 (2.5%)</span><span class="cv2" id="pv_star" style="color:var(--gold);">—</span></div>
+    <div class="cr"><span class="cn" id="pv_star_lbl">⭐ 별지점 (5%)</span><span class="cv2" id="pv_star" style="color:var(--gold);">—</span></div>
     <div class="cr"><span class="cn">🛒 1회 매수금</span><span class="cv2" id="pv_buy" style="color:var(--buy);">—</span></div>
     <div class="cr"><span class="cn">📊 평가손익 / 수익률</span><span class="cv2" id="pv_pnl">—</span></div>
     <div class="cr" style="border:none;"><span class="cn" style="font-size:12px;color:var(--muted);">📊 주문표는 현황 탭에서 확인</span><button class="btn bblue bsm" onclick="sw('dashboard')">현황 보기 →</button></div>
@@ -235,8 +235,8 @@ input[type=checkbox]{width:18px;height:18px;accent-color:var(--buy);cursor:point
   <div class="card" style="margin-bottom:8px;">
     <div class="ckrow"><input type="checkbox" id="c1"> 별지점 확인 완료 (현황 탭)</div>
     <div class="ckrow"><input type="checkbox" id="c2"> 장중 매수 지정가 주문 완료</div>
-    <div class="ckrow"><input type="checkbox" id="c3"> 쿼터매도(2.5%) 지정가 주문 완료</div>
-    <div class="ckrow"><input type="checkbox" id="c4"> 최종매도(5%) 지정가 주문 완료</div>
+    <div class="ckrow"><input type="checkbox" id="c3"> 쿼터매도(5%) 지정가 주문 완료</div>
+    <div class="ckrow"><input type="checkbox" id="c4"> 최종매도(10%) 지정가 주문 완료</div>
   </div>
 
   <div class="sec" style="margin-top:24px;">
@@ -315,7 +315,7 @@ input[type=checkbox]{width:18px;height:18px;accent-color:var(--buy);cursor:point
 
   <div class="g2" style="margin-bottom:12px;">
     <div class="card" style="background:#0d1a30;border-color:#1a4060;">
-      <div class="cl" style="color:var(--blue);" id="d_star_lbl">⭐ 별지점 (2.5%)</div>
+      <div class="cl" style="color:var(--blue);" id="d_star_lbl">⭐ 별지점 (5%)</div>
       <div class="big-num" id="d_star" style="color:var(--gold);">—</div>
     </div>
     <div class="card">
@@ -342,7 +342,7 @@ input[type=checkbox]{width:18px;height:18px;accent-color:var(--buy);cursor:point
     <div class="t-hist" id="tHist"><span style="color:var(--muted);font-size:12px;">저장 기록 없음</span></div>
   </div>
 
-  <div class="fh" style="margin-bottom:4px;" id="modeGuideFH">삼성전자 40분할: 별지점=<span>평단×1.025</span> · 최종매도=<span>평단×1.05</span></div>
+  <div class="fh" style="margin-bottom:4px;" id="modeGuideFH">삼성전자 40분할: 별지점=<span>평단×1.05</span> · 최종매도=<span>평단×1.10</span></div>
   <div class="div"></div>
 
   <div class="lbl">📥 매수 주문표</div>
@@ -467,6 +467,11 @@ const SK='muhan_samsung_v4';
 let moDate=null, tRowCount=0;
 let chartReturn=null, chartT=null, chartAvg=null;
 
+// 전역 변수로 저장할 때 사용할 숫자 보관 (정규식 오류 원천 차단)
+let _globalNewShares = null;
+let _globalNewAvg = null;
+let _globalNextT = null;
+
 // ─── INIT ───
 window.onload=()=>{
   setToday();
@@ -521,6 +526,10 @@ function resetNightSection(){
   document.getElementById('nextTSub').textContent='';
   ['closePrice','notes'].forEach(id=>document.getElementById(id).value=''); 
   
+  _globalNewShares = null;
+  _globalNewAvg = null;
+  _globalNextT = null;
+
   const btn=document.querySelector('[onclick="applyNextT()"]');
   if(btn){
     btn.textContent='✅ 장마감 기록 저장 (내일 아침에 이어받기 하세요!)';
@@ -549,6 +558,13 @@ function checkCarry(){
   const date=document.getElementById('recDate').value;
   if(!date){document.getElementById('carryBanner').style.display='none';return;}
   const recs=getRecs();
+  
+  // 🚨 이미 오늘 데이터가 있으면 배너 숨김
+  if(recs[date]) {
+      document.getElementById('carryBanner').style.display='none';
+      return; 
+  }
+
   const prev=getPrevDate(date,recs);
   if(!prev){document.getElementById('carryBanner').style.display='none';return;}
   
@@ -557,19 +573,13 @@ function checkCarry(){
   const nA=Math.floor(parseFloat(r.newAvg||r.avgPrice||0));
   const nT=parseFloat(r.nextT||r.tVal||0).toFixed(4);
   
-  const isExist = !!recs[date];
-  const title = isExist ? '🔄 전날 데이터 다시 덮어쓰기' : '📥 전날 데이터 이어받기 가능';
-  const titleColor = isExist ? '#ffaa00' : '#4cdd8a';
-  const btnText = isExist ? '다시 덮어쓰기' : '이어받기';
-  const btnStyle = isExist ? 'background:#3d2a00;color:#ffaa00;border:1px solid #804a00;' : '';
-
   document.getElementById('carryBanner').innerHTML = `
     <div style="display:flex;justify-content:space-between;align-items:center;">
       <div>
-        <div style="font-size:12px;color:${titleColor};font-weight:700;margin-bottom:4px;">${title}</div>
+        <div style="font-size:12px;color:#4cdd8a;font-weight:700;margin-bottom:4px;">📥 전날 데이터 이어받기 가능</div>
         <div style="font-size:13px;color:var(--dim);">${prev} → 보유: <b style="color:var(--buy);">${nS}주</b> · 평단: <b style="color:var(--buy);">₩${nA.toLocaleString()}</b> · T값: <b style="color:var(--blue);">${nT}</b></div>
       </div>
-      <button class="btn bblue bsm" style="${btnStyle}" onclick="carryFromPrev(${isExist})">${btnText}</button>
+      <button class="btn bblue bsm" onclick="carryFromPrev(false)">이어받기</button>
     </div>
   `;
   document.getElementById('carryBanner').style.display='block';
@@ -607,11 +617,6 @@ function carryFromPrev(isForce){
 }
 
 // ─── 🚀 SAVE / LOAD ───
-// 전역 변수로 저장할 때 사용할 숫자 보관 (정규식 오류 원천 차단)
-let _globalNewShares = null;
-let _globalNewAvg = null;
-let _globalNextT = null;
-
 async function saveToday(){
   const date=document.getElementById('recDate').value;
   if(!date){toast('날짜를 입력해주세요');return;}
@@ -620,10 +625,11 @@ async function saveToday(){
   const tk=document.getElementById('ticker').value;
   const isRev = document.getElementById('isReverseMode').checked;
 
-  const starPoint=avg>0?avg*1.025:0; 
+  // 🚨 5% 별지점 적용
+  const starPoint=avg>0?avg*1.05:0; 
   const ret=avg>0&&cur>0?(cur-avg)/avg*100:null;
   
-  // 🚨 화면 글씨를 파싱하지 않고, 계산된 전역 변수를 바로 저장
+  // 화면 글씨를 파싱하지 않고, 계산된 전역 변수를 바로 저장
   const r={
     sheetName: "Samsung", 
     date,ticker:tk,splitNum:document.getElementById('splitNum').value,
@@ -778,23 +784,23 @@ function calcAll(){
     pnlColor=pnl>=0?'var(--buy)':'var(--sell)';
   }
 
-  // 1️⃣ 일반 모드
+  // 1️⃣ 일반 모드 (🚨 10% / 5% 세팅)
   if(!isRev){
     const isBack=T>=a/2;
     const isSoJin=T>=a-1;
     if (isSoJin) toast("🚨 T값이 소진되었습니다! 리버스 모드를 켜주세요.");
 
-    const starPoint = avg>0 ? avg * 1.025 : 0;
+    const starPoint = avg>0 ? avg * 1.05 : 0; // 🚨 별지점 5%로 변경
     bAmt=a-T>0&&remain>0?remain/(a-T):0;
     const qq=Math.floor(S/4);
-    const finalPct = 1.05;
+    const finalPct = 1.10; // 🚨 최종매도 10%로 변경
     const fsp = avg * finalPct;
 
-    document.getElementById('pv_star_lbl').textContent='⭐ 별지점 (2.5%)';
+    document.getElementById('pv_star_lbl').textContent='⭐ 별지점 (5%)'; // 🚨 텍스트 변경
     document.getElementById('pv_star').textContent=avg>0?'₩'+Math.floor(starPoint).toLocaleString():'—';
     document.getElementById('pv_buy').textContent=bAmt>0?'₩'+Math.floor(bAmt).toLocaleString():'—';
 
-    document.getElementById('d_star_lbl').textContent='⭐ 별지점 (2.5%)';
+    document.getElementById('d_star_lbl').textContent='⭐ 별지점 (5%)'; // 🚨 텍스트 변경
     document.getElementById('d_star').textContent=avg>0?'₩'+Math.floor(starPoint).toLocaleString():'—';
     document.getElementById('d_t').textContent=T>0?T.toFixed(4)+'T':'—';
 
@@ -804,7 +810,7 @@ function calcAll(){
     else modeEl.innerHTML='<span style="color:#4cdd8a;">🟢 전반전</span>';
 
     document.getElementById('modeGuideFH').className='fh';
-    document.getElementById('modeGuideFH').innerHTML=`${tk} ${a}분할 · 별지점=<span>평단×1.025</span> · 최종매도=<span>평단×1.05</span>`;
+    document.getElementById('modeGuideFH').innerHTML=`삼성전자 공격형: 별지점=<span>평단×1.05</span> · 최종매도=<span>평단×1.10</span>`; // 🚨 가이드 변경
     document.getElementById('modeGuide').innerHTML=!isBack
       ?'전반전: 1회매수금 절반을 <span>별지점(또는 현재가) 이하 매수</span> · 절반은 <span>평단 이하 매수</span>'
       :'후반전: 1회매수금 전체를 <span>별지점 이하 매수</span>';
@@ -814,13 +820,13 @@ function calcAll(){
     
     document.getElementById('sellBody').innerHTML=`
       <tr>
-        <td><span class="tag tq">쿼터매도(1/4)</span></td>
+        <td><span class="tag tq">쿼터매도(5%)</span></td>
         <td><span style="font-family:var(--fm);font-weight:700;color:var(--gold);font-size:16px;">${starPoint>0?'₩'+Math.floor(starPoint).toLocaleString():'—'}</span></td>
         <td><span style="font-family:var(--fm);font-weight:700;color:var(--pink);font-size:16px;">${S>0?qq+'주':'—'}</span></td>
         <td><input type="checkbox"></td>
       </tr>
       <tr>
-        <td><span class="tag ts">최종매도(전량)</span></td>
+        <td><span class="tag ts">최종매도(10%)</span></td>
         <td><span style="font-family:var(--fm);font-weight:700;color:var(--sell);font-size:16px;">${fsp>0?'₩'+Math.floor(fsp).toLocaleString():'—'}</span></td>
         <td><span style="font-family:var(--fm);font-weight:700;color:var(--sell);font-size:16px;">${S>0?(S-qq)+'주':'—'}</span></td>
         <td><input type="checkbox"></td>
@@ -880,7 +886,7 @@ function calcAll(){
   document.getElementById('d_pct').textContent=pctStr;
   document.getElementById('d_pct').style.color=pnlColor;
 
-  // 🚨 [현황 업데이트] 마감 데이터가 없으면 기본값으로 덮어씀
+  // 현황 업데이트 마감 데이터 우선
   if (_globalNewShares === null) {
       document.getElementById('d_shares').textContent=S>0?S+'주':'—';
       document.getElementById('d_avg').textContent=avg>0?'₩'+Math.floor(avg).toLocaleString():'—';
@@ -990,14 +996,12 @@ function calcTInc(){
   const nS = S + totalSh - (applySell ? sellSh : 0);
   const nA = totalSh > 0 ? (S*avg + totalAmt)/(S+totalSh) : avg; 
   
-  // 🚨 여기서 전역 변수에 숫자 바로 할당
   if (nS > 0 || totalSh > 0 || applySell) {
     _globalNewShares = nS;
     _globalNewAvg = nA;
     document.getElementById('newShares').textContent=nS+'주';
     document.getElementById('newAvg').textContent='₩'+Math.floor(nA).toLocaleString();
     
-    // 현황판 즉시 반영
     document.getElementById('d_shares').textContent=nS+'주';
     document.getElementById('d_avg').textContent='₩'+Math.floor(nA).toLocaleString();
   } else {
@@ -1006,7 +1010,6 @@ function calcTInc(){
     document.getElementById('newShares').textContent='—';
     document.getElementById('newAvg').textContent='—';
     
-    // 초기화 시 현황판 복구
     document.getElementById('d_shares').textContent=S>0?S+'주':'—';
     document.getElementById('d_avg').textContent=avg>0?'₩'+Math.floor(avg).toLocaleString():'—';
   }
