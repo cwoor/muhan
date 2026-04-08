@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>삼성전자 무한매수 v4.2 (안정화 버전)</title>
+<title>삼성전자 무한매수 v4.2 (안정화 및 골드테마)</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
 @import url('https://cdn.jsdelivr.net/npm/pretendard@1.3.9/dist/web/static/pretendard.css');
@@ -165,11 +165,11 @@ input[type=checkbox]{width:18px;height:18px;accent-color:var(--buy);cursor:point
 /* 현황 큰 숫자 */
 .big-num{font-family:var(--fm);font-size:24px;font-weight:900;}
 
-/* 명예의 전당 배너 */
-.hall-of-fame {background: linear-gradient(135deg, #0a1520, #0d2040); border: 1px solid var(--blue); border-radius: 12px; padding: 15px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center;}
-.hof-title {font-size: 12px; color: #7ab8f5; font-weight: 800; letter-spacing: 1px; margin-bottom: 4px;}
+/* 🚨 명예의 전당 배너 (골드 버전) */
+.hall-of-fame {background: linear-gradient(135deg, #1a1000, #3d2a00); border: 1px solid var(--gold); border-radius: 12px; padding: 15px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center;}
+.hof-title {font-size: 12px; color: var(--gold); font-weight: 800; letter-spacing: 1px; margin-bottom: 4px;}
 .hof-val {font-family: var(--fm); font-size: 22px; font-weight: 900; color: #fff;}
-.hof-cycle {background: var(--blue); color: #000; font-size: 11px; font-weight: 900; padding: 3px 8px; border-radius: 12px;}
+.hof-cycle {background: var(--gold); color: #000; font-size: 11px; font-weight: 900; padding: 3px 8px; border-radius: 12px;}
 
 @media(max-width:540px){
   .g4{grid-template-columns:repeat(2,1fr);}
@@ -441,13 +441,13 @@ input[type=checkbox]{width:18px;height:18px;accent-color:var(--buy);cursor:point
     </div>
   </div>
 
-  <div class="setting-section" style="border: 1px solid var(--blue); background: rgba(79, 156, 249, 0.05);">
+  <div class="setting-section" style="border: 1px solid var(--gold); background: rgba(245, 197, 24, 0.05);">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-      <div class="lbl" style="margin:0; color: var(--blue);">🏆 수익 관리 및 명예의 전당</div>
+      <div class="lbl" style="margin:0; color: var(--gold);">🏆 수익 관리 및 명예의 전당</div>
       <div class="hof-cycle" id="setCycleBadge">1회차</div>
     </div>
-    <div class="card" style="background:#0a1520; border-color:#1a3040; margin-bottom:14px;">
-      <div class="cl" style="color:#7ab8f5;">총 누적 실현 수익</div>
+    <div class="card" style="background:#1a1000; border-color:#804a00; margin-bottom:14px;">
+      <div class="cl" style="color:var(--gold);">총 누적 실현 수익</div>
       <div class="cv" id="setTotalProfit" style="font-size:24px; color:#fff;">₩0</div>
     </div>
     
@@ -482,16 +482,16 @@ input[type=checkbox]{width:18px;height:18px;accent-color:var(--buy);cursor:point
 </div>
 
 <div class="mov" id="resetModal" onclick="closeResetMo(event)">
-  <div class="modal" style="background:#0a1520; border:1px solid var(--blue);">
-    <h3 style="font-size:18px; font-weight:900; color:#7ab8f5; margin-bottom:10px;">🎉 익절을 축하드립니다! 🎉</h3>
+  <div class="modal" style="background:#1a1000; border:1px solid var(--gold);">
+    <h3 style="font-size:18px; font-weight:900; color:var(--gold); margin-bottom:10px;">🎉 익절을 축하드립니다! 🎉</h3>
     <p style="font-size:14px; color:var(--text); margin-bottom:20px; line-height:1.5;">이번 사이클에서 확정 지은 <b>최종 실현 수익금(₩)</b>을 입력해 주세요. 명예의 전당에 기록되고, 잔고는 0으로 초기화됩니다.</p>
-    <div class="card" style="background:#0a0a0a; border-color:#1a3040; margin-bottom:20px;">
+    <div class="card" style="background:#0a0a0a; border-color:#3d2a00; margin-bottom:20px;">
       <div class="cl">이번 회차 수익금 (₩)</div>
       <input type="number" id="cycleProfitInput" placeholder="예: 350000" step="100" style="font-size:24px; color:var(--buy);">
     </div>
     <div style="display:flex; gap:10px;">
       <button class="btn bs" style="flex:1;" onclick="closeResetMo()">취소</button>
-      <button class="btn bblue" style="flex:2; font-weight:700;" onclick="executeReset()">🚀 명예의 전당 등록 & 리셋</button>
+      <button class="btn bp" style="flex:2; font-weight:700;" onclick="executeReset()">🚀 명예의 전당 등록 & 리셋</button>
     </div>
   </div>
 </div>
@@ -658,7 +658,7 @@ function renderHOF() {
       const isPlus = r.profit >= 0;
       listHtml += `
         <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid #1e2d45;">
-          <span style="color:var(--dim);">${r.date} <span style="color:#7ab8f5;font-weight:700;">[${r.cycle}회차]</span></span>
+          <span style="color:var(--dim);">${r.date} <span style="color:var(--gold);font-weight:700;">[${r.cycle}회차]</span></span>
           <span style="font-family:var(--fm); font-weight:700; color:${isPlus ? 'var(--buy)' : 'var(--sell)'}">${isPlus?'+':''}₩${Math.floor(r.profit).toLocaleString()}</span>
         </div>
       `;
@@ -779,7 +779,6 @@ async function saveToday(){
     c1:document.getElementById('c1')?.checked,c2:document.getElementById('c2')?.checked,
     c3:document.getElementById('c3')?.checked,c4:document.getElementById('c4')?.checked,
     starPoint,returnPct:ret,
-    // 🚨 여기서 T값 0 에러 방지 (null 체크 강화)
     nextT: (_globalNextT !== null && _globalNextT !== undefined) ? _globalNextT : null,
     newShares: (_globalNewShares !== null && _globalNewShares !== undefined) ? _globalNewShares : null,
     newAvg: (_globalNewAvg !== null && _globalNewAvg !== undefined) ? _globalNewAvg : null,
@@ -872,7 +871,7 @@ function fillForm(r){
   calcAll();
 
   // 저장되어 있던 마감 데이터 복원
-  if(r.newShares) {
+  if(r.newShares !== undefined && r.newShares !== null) {
      _globalNewShares = parseFloat(r.newShares);
      document.getElementById('newShares').textContent = _globalNewShares + '주';
      document.getElementById('d_shares').textContent = _globalNewShares + '주';
@@ -880,7 +879,7 @@ function fillForm(r){
      _globalNewShares = null;
   }
 
-  if(r.newAvg) {
+  if(r.newAvg !== undefined && r.newAvg !== null) {
      _globalNewAvg = parseFloat(r.newAvg);
      document.getElementById('newAvg').textContent = '₩' + Math.floor(_globalNewAvg).toLocaleString();
      document.getElementById('d_avg').textContent = '₩' + Math.floor(_globalNewAvg).toLocaleString();
@@ -927,11 +926,12 @@ function calcAll(){
     if (isSoJin) toast("🚨 T값이 소진되었습니다! 리버스 모드를 켜주세요.");
 
     const starPoint = avg>0 ? avg * 1.05 : 0; 
-    bAmt=a-T>0&&remain>0?remain/(a-T):0;
     
-    // 🚨 첫 1회차(T가 0일 때) 매수금액을 총원금/분할수로 강제 고정
+    // 🚨 첫 거래(T가 0일 때) 매수금액을 총원금/분할수로 강제 고정
     if(T === 0 && S === 0) {
       bAmt = P / a;
+    } else {
+      bAmt=a-T>0&&remain>0?remain/(a-T):0;
     }
 
     const qq=Math.floor(S/4);
@@ -1154,12 +1154,12 @@ function calcTInc(){
   let nT = T;
 
   if(!isRev){
-    // 🚨 여기서 첫 거래(T가 0일 때) bAmt를 강제로 원금/분할수로 고정
+    // 🚨 첫 거래 T값 방어 추가
     let bAmt = 0;
     if(T === 0 && S === 0) {
       bAmt = P / a;
     } else {
-      bAmt = a-T>0 && remain>0 ? remain/(a-T) : 0;
+      bAmt = a-T>0&&remain>0?remain/(a-T):0;
     }
     
     if(totalAmt>0 && bAmt>0){
