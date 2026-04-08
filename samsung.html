@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>삼성전자 무한매수 v4.1 (수익관리형)</title>
+<title>삼성전자 무한매수 v4.2 (안정화 버전)</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
 @import url('https://cdn.jsdelivr.net/npm/pretendard@1.3.9/dist/web/static/pretendard.css');
@@ -779,9 +779,10 @@ async function saveToday(){
     c1:document.getElementById('c1')?.checked,c2:document.getElementById('c2')?.checked,
     c3:document.getElementById('c3')?.checked,c4:document.getElementById('c4')?.checked,
     starPoint,returnPct:ret,
-    nextT: _globalNextT !== null ? _globalNextT : null,
-    newShares: _globalNewShares !== null ? _globalNewShares : null,
-    newAvg: _globalNewAvg !== null ? _globalNewAvg : null,
+    // 🚨 여기서 T값 0 에러 방지 (null 체크 강화)
+    nextT: (_globalNextT !== null && _globalNextT !== undefined) ? _globalNextT : null,
+    newShares: (_globalNewShares !== null && _globalNewShares !== undefined) ? _globalNewShares : null,
+    newAvg: (_globalNewAvg !== null && _globalNewAvg !== undefined) ? _globalNewAvg : null,
     savedAt:new Date().toISOString()
   };
   
@@ -887,7 +888,7 @@ function fillForm(r){
      _globalNewAvg = null;
   }
 
-  if(r.nextT) {
+  if(r.nextT !== undefined && r.nextT !== null) {
      _globalNextT = parseFloat(r.nextT);
      document.getElementById('nextT').textContent = _globalNextT.toFixed(4) + 'T';
      document.getElementById('d_t').textContent = _globalNextT.toFixed(4) + 'T';
@@ -925,10 +926,16 @@ function calcAll(){
     const isSoJin=T>=a-1;
     if (isSoJin) toast("🚨 T값이 소진되었습니다! 리버스 모드를 켜주세요.");
 
-    const starPoint = avg>0 ? avg * 1.05 : 0; // 🚨 별지점 5%로 변경
+    const starPoint = avg>0 ? avg * 1.05 : 0; 
     bAmt=a-T>0&&remain>0?remain/(a-T):0;
+    
+    // 🚨 첫 1회차(T가 0일 때) 매수금액을 총원금/분할수로 강제 고정
+    if(T === 0 && S === 0) {
+      bAmt = P / a;
+    }
+
     const qq=Math.floor(S/4);
-    const finalPct = 1.10; // 🚨 최종매도 10%로 변경
+    const finalPct = 1.10; 
     const fsp = avg * finalPct;
 
     document.getElementById('pv_star_lbl').textContent='⭐ 별지점 (5%)'; 
@@ -1147,7 +1154,13 @@ function calcTInc(){
   let nT = T;
 
   if(!isRev){
-    const bAmt=a-T>0&&remain>0?remain/(a-T):0;
+    // 🚨 여기서 첫 거래(T가 0일 때) bAmt를 강제로 원금/분할수로 고정
+    let bAmt = 0;
+    if(T === 0 && S === 0) {
+      bAmt = P / a;
+    } else {
+      bAmt = a-T>0 && remain>0 ? remain/(a-T) : 0;
+    }
     
     if(totalAmt>0 && bAmt>0){
       nT = T + totalAmt/bAmt;
