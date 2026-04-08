@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>삼성전자 무한매수 v4.2 (안정화 및 골드테마)</title>
+<title>삼성전자 무한매수 v4.3 (안정화 및 골드테마)</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
 @import url('https://cdn.jsdelivr.net/npm/pretendard@1.3.9/dist/web/static/pretendard.css');
@@ -165,7 +165,7 @@ input[type=checkbox]{width:18px;height:18px;accent-color:var(--buy);cursor:point
 /* 현황 큰 숫자 */
 .big-num{font-family:var(--fm);font-size:24px;font-weight:900;}
 
-/* 🚨 명예의 전당 배너 (골드 버전) */
+/* 명예의 전당 배너 (골드) */
 .hall-of-fame {background: linear-gradient(135deg, #1a1000, #3d2a00); border: 1px solid var(--gold); border-radius: 12px; padding: 15px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center;}
 .hof-title {font-size: 12px; color: var(--gold); font-weight: 800; letter-spacing: 1px; margin-bottom: 4px;}
 .hof-val {font-family: var(--fm); font-size: 22px; font-weight: 900; color: #fff;}
@@ -517,7 +517,7 @@ const SK='muhan_samsung_v4';
 let moDate=null, tRowCount=0;
 let chartReturn=null, chartT=null, chartAvg=null;
 
-// 전역 변수로 저장할 때 사용할 숫자 보관 (정규식 오류 원천 차단)
+// 전역 변수로 저장할 때 사용할 숫자 보관
 let _globalNewShares = null;
 let _globalNewAvg = null;
 let _globalNextT = null;
@@ -531,7 +531,7 @@ window.onload=()=>{
   loadToday();
   calcAll();
   renderStats();
-  renderHOF(); // 명예의 전당 로드
+  renderHOF(); 
   syncFromCloud(); 
 };
 
@@ -557,7 +557,6 @@ function sw(tab){
 function getRecs(){try{return JSON.parse(localStorage.getItem(SK))||{};}catch{return{};}}
 function setRecs(r){localStorage.setItem(SK,JSON.stringify(r));}
 
-// 🚨 수익 기록 스토리지 분리 (삼성전자 전용)
 function getProfits(){try{return JSON.parse(localStorage.getItem(SK+'_profits'))||{cycle:1, records:[]};}catch{return{cycle:1, records:[]};}}
 function setProfits(p){localStorage.setItem(SK+'_profits',JSON.stringify(p));}
 
@@ -595,7 +594,7 @@ function resetNightSection(){
   }
 }
 
-// ─── 명예의 전당 & 리셋 로직 (삼성전자 버전) ───
+// ─── 명예의 전당 & 리셋 로직 ───
 function promptResetCycle() {
   document.getElementById('cycleProfitInput').value = '';
   document.getElementById('resetModal').classList.add('open');
@@ -694,7 +693,6 @@ function checkCarry(){
   if(!date){document.getElementById('carryBanner').style.display='none';return;}
   const recs=getRecs();
   
-  // 🚨 이미 오늘 데이터가 있으면 배너 숨김
   if(recs[date]) {
       document.getElementById('carryBanner').style.display='none';
       return; 
@@ -760,11 +758,9 @@ async function saveToday(){
   const tk=document.getElementById('ticker').value;
   const isRev = document.getElementById('isReverseMode').checked;
 
-  // 🚨 5% 별지점 적용
   const starPoint=avg>0?avg*1.05:0; 
   const ret=avg>0&&cur>0?(cur-avg)/avg*100:null;
   
-  // 화면 글씨를 파싱하지 않고, 계산된 전역 변수를 바로 저장
   const r={
     sheetName: "Samsung", 
     date,ticker:tk,splitNum:document.getElementById('splitNum').value,
@@ -804,7 +800,6 @@ async function saveToday(){
   }
 }
 
-// 서버 동기화 시 Samsung 시트만 불러오기
 async function syncFromCloud(){
   const el = document.getElementById('saveStatus');
   el.textContent = "🔄 서버 동기화 중...";
@@ -870,7 +865,6 @@ function fillForm(r){
   ['c1','c2','c3','c4'].forEach(id=>{if(document.getElementById(id)) document.getElementById(id).checked=r[id]||false;});
   calcAll();
 
-  // 저장되어 있던 마감 데이터 복원
   if(r.newShares !== undefined && r.newShares !== null) {
      _globalNewShares = parseFloat(r.newShares);
      document.getElementById('newShares').textContent = _globalNewShares + '주';
@@ -919,7 +913,6 @@ function calcAll(){
     pnlColor=pnl>=0?'var(--buy)':'var(--sell)';
   }
 
-  // 1️⃣ 일반 모드 (🚨 10% / 5% 세팅)
   if(!isRev){
     const isBack=T>=a/2;
     const isSoJin=T>=a-1;
@@ -927,7 +920,6 @@ function calcAll(){
 
     const starPoint = avg>0 ? avg * 1.05 : 0; 
     
-    // 🚨 첫 거래(T가 0일 때) 매수금액을 총원금/분할수로 강제 고정
     if(T === 0 && S === 0) {
       bAmt = P / a;
     } else {
@@ -973,9 +965,7 @@ function calcAll(){
         <td><span style="font-family:var(--fm);font-weight:700;color:var(--sell);font-size:16px;">${S>0?(S-qq)+'주':'—'}</span></td>
         <td><input type="checkbox"></td>
       </tr>`;
-  }
-  // 2️⃣ 리버스 모드
-  else {
+  } else {
     const modeEl=document.getElementById('d_mode');
     if (pct >= -20 && avg > 0) {
       modeEl.innerHTML='<span style="color:#4cdd8a;font-size:13px;line-height:1.2;">🟢 수익 -20% 돌파!<br>리버스모드 끄세요!</span>';
@@ -1154,7 +1144,6 @@ function calcTInc(){
   let nT = T;
 
   if(!isRev){
-    // 🚨 첫 거래 T값 방어 추가
     let bAmt = 0;
     if(T === 0 && S === 0) {
       bAmt = P / a;
@@ -1244,10 +1233,10 @@ function renderCharts(){
   const avgData=dates.map(d=>parseFloat(recs[d].newAvg||recs[d].avgPrice)||null);
   const starData=dates.map(d=>parseFloat(recs[d].starPoint)||null);
   const lastR=recs[dates[dates.length-1]];
-  const validRet=retData.filter(v=>v!==null);
+  const validRet=retData.filter(v=>v!==null && !isNaN(v));
   const maxRet=validRet.length?Math.max(...validRet):0;
   const minRet=validRet.length?Math.min(...validRet):0;
-  const curRet=parseFloat(lastR.returnPct||0);
+  const curRet=parseFloat(lastR.returnPct)||0;
   document.getElementById('chartSummary').innerHTML=`
     <div class="stat-big">
       <div class="cl">현재 수익률</div>
@@ -1274,6 +1263,7 @@ function renderCharts(){
   chartAvg=new Chart(document.getElementById('chartAvg'),{type:'line',data:{labels,datasets:[{data:avgData,borderColor:'#f5c518',tension:0.4,pointRadius:3,fill:false,label:'평단'},{data:starData,borderColor:'#ff80d5',borderDash:[4,4],tension:0.4,pointRadius:3,fill:false,label:'별지점',borderWidth:1.5}]},options:{...base,plugins:{...base.plugins,legend:{display:true,labels:{color:'#7a8aa0',font:{size:12}}}}}});
 }
 
+// 🚨 히스토리 NaN 에러 방지 로직 적용 완료
 function renderHist(){
   const recs=getRecs();
   const q=(document.getElementById('histSearch').value||'').toLowerCase();
@@ -1282,14 +1272,15 @@ function renderHist(){
   tbody.innerHTML='';
   document.getElementById('histEmpty').style.display=dates.length?'none':'block';
   dates.forEach(date=>{
-    const r=recs[date],p=r.returnPct;
-    const ps=p!=null?`<span class="${parseFloat(p)>=0?'pp':'pn'}">${parseFloat(p)>=0?'+':''}${parseFloat(p).toFixed(2)}%</span>`:'—';
+    const r=recs[date];
+    let pVal = parseFloat(r.returnPct);
+    const ps = !isNaN(pVal) ? `<span class="${pVal>=0?'pp':'pn'}">${pVal>=0?'+':''}${pVal.toFixed(2)}%</span>` : '—';
     const tr=document.createElement('tr');
     tr.onclick=()=>openMo(date);
 
-    const hT = r.nextT ? parseFloat(r.nextT).toFixed(2) : (r.tVal ? parseFloat(r.tVal).toFixed(2) : '—');
-    const hAvg = r.newAvg ? r.newAvg : (r.avgPrice || 0);
-    const hShares = r.newShares ? r.newShares : (r.shares || '—');
+    const hT = r.nextT !== undefined && r.nextT !== null ? parseFloat(r.nextT).toFixed(2) : (r.tVal ? parseFloat(r.tVal).toFixed(2) : '—');
+    const hAvg = r.newAvg !== undefined && r.newAvg !== null ? r.newAvg : (r.avgPrice || 0);
+    const hShares = r.newShares !== undefined && r.newShares !== null ? r.newShares : (r.shares || '—');
 
     tr.innerHTML=`<td style="color:var(--gold);font-weight:700;">${date}</td>
       <td>${r.ticker||'—'}</td>
@@ -1314,8 +1305,8 @@ function renderStats(){
   dates.forEach(d=>{const r=recs[d];const tk=r.ticker||'삼성전자';if(!byTk[tk]||d>byTk[tk].date)byTk[tk]={...r,date:d};});
   let sgHtml='';
   Object.entries(byTk).forEach(([tk,r])=>{
-    const p=r.returnPct;
-    const ps=p!=null?`<span style="color:${parseFloat(p)>=0?'var(--buy)':'var(--sell)'};font-size:22px;font-weight:900;">${parseFloat(p)>=0?'+':''}${parseFloat(p).toFixed(2)}%</span>`:'—';
+    let pVal = parseFloat(r.returnPct);
+    const ps = !isNaN(pVal) ? `<span style="color:${pVal>=0?'var(--buy)':'var(--sell)'};font-size:22px;font-weight:900;">${pVal>=0?'+':''}${pVal.toFixed(2)}%</span>` : '—';
     sgHtml+=`<div class="card" style="border-color:#2a3a5a;">
       <div style="font-size:17px;font-weight:900;color:var(--gold);margin-bottom:8px;">${tk}</div>
       <div style="font-size:12px;color:var(--muted);">최근: ${r.date}</div>
@@ -1349,7 +1340,8 @@ function openMo(date){
   const r=getRecs()[date];if(!r)return;
   moDate=date;
   document.getElementById('moTitle').textContent=`📋 ${date}`;
-  const p=r.returnPct;
+  let pVal = parseFloat(r.returnPct);
+  const pDisp = !isNaN(pVal) ? `<span class="mv" style="color:${pVal>=0?'var(--buy)':'var(--sell)'};">${pVal>=0?'+':''}${pVal.toFixed(2)}%</span>` : `<span class="mv">—</span>`;
   document.getElementById('moBody').innerHTML=`
     <div class="mr"><span class="ml">종목 / 분할</span><span class="mv">${r.ticker||'—'} / ${r.splitNum||40}분할</span></div>
     <div class="mr"><span class="ml">T값 → 내일T</span><span class="mv">${r.tVal?parseFloat(r.tVal).toFixed(4):'—'} → <span style="color:var(--blue);">${r.nextT?parseFloat(r.nextT).toFixed(4):'미입력'}</span></span></div>
@@ -1357,7 +1349,7 @@ function openMo(date){
     <div class="mr"><span class="ml">평단 (업데이트후)</span><span class="mv">₩${Math.round(r.newAvg||r.avgPrice||0).toLocaleString()}</span></div>
     <div class="mr"><span class="ml">보유주 (업데이트후)</span><span class="mv">${r.newShares||r.shares||'—'}주</span></div>
     <div class="mr"><span class="ml">별지점</span><span class="mv" style="color:var(--gold);">₩${Math.round(r.starPoint||0).toLocaleString()}</span></div>
-    <div class="mr"><span class="ml">수익률</span><span class="mv" style="color:${p>=0?'var(--buy)':'var(--sell)'};">${p!=null?(p>=0?'+':'')+parseFloat(p).toFixed(2)+'%':'—'}</span></div>
+    <div class="mr"><span class="ml">수익률</span>${pDisp}</div>
     <div class="mr"><span class="ml">종가</span><span class="mv">${r.closePrice?'₩'+Math.round(r.closePrice).toLocaleString():'—'}</span></div>
     ${r.notes?`<div style="margin-top:12px;padding:12px;background:var(--sf2);border-radius:8px;font-size:13px;color:var(--dim);">${r.notes}</div>`:''}`;
   document.getElementById('modalOv').classList.add('open');
@@ -1404,7 +1396,7 @@ function exportCSV(){
   const recs=getRecs();const dates=Object.keys(recs).sort();
   if(!dates.length){toast('저장 기록 없음');return;}
   const hdr='날짜,종목,T값,내일T값,분할,평단,업데이트평단,현재가,보유주,업데이트보유주,별지점,수익률,종가,메모';
-  const rows=dates.map(d=>{const r=recs[d];const p=r.returnPct!=null?parseFloat(r.returnPct).toFixed(2)+'%':'';
+  const rows=dates.map(d=>{const r=recs[d];let pVal = parseFloat(r.returnPct); const p=!isNaN(pVal)?pVal.toFixed(2)+'%':'';
     return[d,r.ticker||'',r.tVal||'',r.nextT||'',r.splitNum||'',r.avgPrice||'',r.newAvg||'',r.curPrice||'',r.shares||'',r.newShares||'',r.starPoint?Math.floor(r.starPoint):'',p,r.closePrice||'','"'+(r.notes||'').replace(/"/g,'""')+'"'].join(',');});
   const csv='\uFEFF'+hdr+'\n'+rows.join('\n');
   const a=document.createElement('a');
