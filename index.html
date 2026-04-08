@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>무한매수법 v4.1 (수익관리형)</title>
+<title>무한매수법 v4.2 (안정화 버전)</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
 @import url('https://cdn.jsdelivr.net/npm/pretendard@1.3.9/dist/web/static/pretendard.css');
@@ -787,9 +787,10 @@ async function saveToday(){
     c3:document.getElementById('c3')?.checked,c4:document.getElementById('c4')?.checked,
     c5:document.getElementById('c5')?.checked,
     starPoint,returnPct:ret,
-    nextT: _globalNextT !== null ? _globalNextT : null,
-    newShares: _globalNewShares !== null ? _globalNewShares : null,
-    newAvg: _globalNewAvg !== null ? _globalNewAvg : null,
+    // 🚨 T값 0 에러 방지 처리 추가
+    nextT: (_globalNextT !== null && _globalNextT !== undefined) ? _globalNextT : null,
+    newShares: (_globalNewShares !== null && _globalNewShares !== undefined) ? _globalNewShares : null,
+    newAvg: (_globalNewAvg !== null && _globalNewAvg !== undefined) ? _globalNewAvg : null,
     savedAt:new Date().toISOString()
   };
   
@@ -893,7 +894,8 @@ function fillForm(r){
      _globalNewAvg = null;
   }
 
-  if(r.nextT) {
+  // 🚨 null 체크 강화
+  if(r.nextT !== undefined && r.nextT !== null) {
      _globalNextT = parseFloat(r.nextT);
      document.getElementById('nextT').textContent = _globalNextT.toFixed(4) + 'T';
      document.getElementById('d_t').textContent = _globalNextT.toFixed(4) + 'T';
@@ -936,7 +938,14 @@ function calcAll(){
     else sp=a===20?(15-1.5*T):(15-0.75*T);
 
     const starPoint=avg>0?avg*(1+sp/100):0;
-    bAmt=a-T>0&&remain>0?remain/(a-T):0;
+    
+    // 🚨 첫 거래(T가 0일 때) bAmt를 강제로 원금/분할수로 고정
+    if(T === 0 && S === 0) {
+      bAmt = P / a;
+    } else {
+      bAmt=a-T>0&&remain>0?remain/(a-T):0;
+    }
+    
     const qq=Math.floor(S/4);
     const finalPct=tk==='SOXL'?1.20:1.15;
     const fsp=avg*finalPct;
@@ -1132,7 +1141,7 @@ function calcTInc(){
   const nS = S + totalSh - (applySell ? sellSh : 0);
   const nA = totalSh > 0 ? (S*avg + totalAmt)/(S+totalSh) : avg; 
   
-  if (nS > 0 || totalSh > 0) {
+  if (nS > 0 || totalSh > 0 || applySell) {
     document.getElementById('newShares').textContent=nS+'주';
     document.getElementById('newAvg').textContent='$'+nA.toFixed(2);
   } else {
@@ -1143,7 +1152,13 @@ function calcTInc(){
   let nT = T;
 
   if(!isRev){
-    const bAmt=a-T>0&&remain>0?remain/(a-T):0;
+    // 🚨 첫 거래 T값 방어 추가
+    let bAmt = 0;
+    if(T === 0 && S === 0) {
+      bAmt = P / a;
+    } else {
+      bAmt = a-T>0&&remain>0?remain/(a-T):0;
+    }
     
     if(totalAmt>0 && bAmt>0){
       nT = T + totalAmt/bAmt;
@@ -1344,7 +1359,7 @@ function cDel(date){if(!confirm(`${date} 삭제?`))return;const r=getRecs();dele
 
 function exportJSON(){
   const recs=getRecs();
-  const prof=getProfits(); // 🚨 수익 기록도 같이 내보내기
+  const prof=getProfits(); 
   const exportData = { records: recs, profits: prof };
   if(!Object.keys(recs).length && prof.records.length === 0){toast('저장 기록 없음');return;}
   const a=document.createElement('a');
@@ -1363,7 +1378,7 @@ function importJSON(e){
         const merged={...getRecs(),...imported.records};
         setRecs(merged);
         if(imported.profits) setProfits(imported.profits);
-      } else { // 구버전 호환
+      } else { 
         const merged={...getRecs(),...imported};
         setRecs(merged);
       }
