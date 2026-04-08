@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>삼성전자 무한매수 v4.0</title>
+<title>삼성전자 무한매수 v4.1 (수익관리형)</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
 @import url('https://cdn.jsdelivr.net/npm/pretendard@1.3.9/dist/web/static/pretendard.css');
@@ -95,6 +95,8 @@ select{background:transparent;border:none;outline:none;font-family:var(--fb);fon
 .bblue:hover{background:#1a3050;}
 .bgreen{background:#0a2010;color:#4cdd8a;border:1px solid #1a5a20;padding:11px 18px;font-size:13px;}
 .bgreen:hover{background:#0d2a14;}
+.bred{background:#3d0000;color:#ff5c5c;border:1px solid #5a1a1a;padding:13px 22px;font-size:14px;}
+.bred:hover{background:#5a0000;}
 
 /* HINT */
 .fh{background:#0d1520;border:1px solid #1e2d45;border-left:3px solid var(--gold);border-radius:7px;padding:10px 14px;font-size:12px;color:var(--dim);font-family:var(--fm);line-height:1.9;}
@@ -162,6 +164,12 @@ input[type=checkbox]{width:18px;height:18px;accent-color:var(--buy);cursor:point
 
 /* 현황 큰 숫자 */
 .big-num{font-family:var(--fm);font-size:24px;font-weight:900;}
+
+/* 명예의 전당 배너 */
+.hall-of-fame {background: linear-gradient(135deg, #0a1520, #0d2040); border: 1px solid var(--blue); border-radius: 12px; padding: 15px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center;}
+.hof-title {font-size: 12px; color: #7ab8f5; font-weight: 800; letter-spacing: 1px; margin-bottom: 4px;}
+.hof-val {font-family: var(--fm); font-size: 22px; font-weight: 900; color: #fff;}
+.hof-cycle {background: var(--blue); color: #000; font-size: 11px; font-weight: 900; padding: 3px 8px; border-radius: 12px;}
 
 @media(max-width:540px){
   .g4{grid-template-columns:repeat(2,1fr);}
@@ -313,6 +321,14 @@ input[type=checkbox]{width:18px;height:18px;accent-color:var(--buy);cursor:point
     <button class="btn bs bsm" onclick="calcAll();toast('🔄 새로고침!')">🔄</button>
   </div>
 
+  <div class="hall-of-fame">
+    <div>
+      <div class="hof-title">🏆 삼성전자 누적 실현 수익</div>
+      <div class="hof-val" id="hofTotalProfit">₩0</div>
+    </div>
+    <div class="hof-cycle" id="hofCycle">1회차 진행중</div>
+  </div>
+
   <div class="g2" style="margin-bottom:12px;">
     <div class="card" style="background:#0d1a30;border-color:#1a4060;">
       <div class="cl" style="color:var(--blue);" id="d_star_lbl">⭐ 별지점 (5%)</div>
@@ -425,6 +441,25 @@ input[type=checkbox]{width:18px;height:18px;accent-color:var(--buy);cursor:point
     </div>
   </div>
 
+  <div class="setting-section" style="border: 1px solid var(--blue); background: rgba(79, 156, 249, 0.05);">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+      <div class="lbl" style="margin:0; color: var(--blue);">🏆 수익 관리 및 명예의 전당</div>
+      <div class="hof-cycle" id="setCycleBadge">1회차</div>
+    </div>
+    <div class="card" style="background:#0a1520; border-color:#1a3040; margin-bottom:14px;">
+      <div class="cl" style="color:#7ab8f5;">총 누적 실현 수익</div>
+      <div class="cv" id="setTotalProfit" style="font-size:24px; color:#fff;">₩0</div>
+    </div>
+    
+    <div style="font-size:13px; color:var(--dim); margin-bottom:12px;">목표 수익을 달성하고 전량 매도했다면, 아래 버튼을 눌러 다음 회차로 깔끔하게 넘어가세요!</div>
+    <button class="btn bred" onclick="promptResetCycle()" style="width:100%; margin-bottom:16px;">🚀 전량 익절! 새 사이클 시작 (리셋)</button>
+
+    <div class="cl">📜 역대 졸업 기록 (명예의 전당)</div>
+    <div id="hofList" style="background:var(--sf); border:1px solid var(--bd); border-radius:8px; padding:10px; max-height:150px; overflow-y:auto; font-size:13px; color:var(--text);">
+      <div style="color:var(--muted); text-align:center; padding:10px;">아직 졸업 기록이 없습니다.</div>
+    </div>
+  </div>
+
   <div class="setting-section">
     <div class="lbl">🔄 데이터 백업 / 복원</div>
     <div style="font-size:13px;color:var(--dim);margin-bottom:12px;line-height:1.7;">
@@ -443,6 +478,21 @@ input[type=checkbox]{width:18px;height:18px;accent-color:var(--buy);cursor:point
     <div id="statsGrid" class="g2" style="margin-bottom:14px;"></div>
     <div class="lbl" style="margin-top:0;">T값 진행률</div>
     <div id="progressCards"></div>
+  </div>
+</div>
+
+<div class="mov" id="resetModal" onclick="closeResetMo(event)">
+  <div class="modal" style="background:#0a1520; border:1px solid var(--blue);">
+    <h3 style="font-size:18px; font-weight:900; color:#7ab8f5; margin-bottom:10px;">🎉 익절을 축하드립니다! 🎉</h3>
+    <p style="font-size:14px; color:var(--text); margin-bottom:20px; line-height:1.5;">이번 사이클에서 확정 지은 <b>최종 실현 수익금(₩)</b>을 입력해 주세요. 명예의 전당에 기록되고, 잔고는 0으로 초기화됩니다.</p>
+    <div class="card" style="background:#0a0a0a; border-color:#1a3040; margin-bottom:20px;">
+      <div class="cl">이번 회차 수익금 (₩)</div>
+      <input type="number" id="cycleProfitInput" placeholder="예: 350000" step="100" style="font-size:24px; color:var(--buy);">
+    </div>
+    <div style="display:flex; gap:10px;">
+      <button class="btn bs" style="flex:1;" onclick="closeResetMo()">취소</button>
+      <button class="btn bblue" style="flex:2; font-weight:700;" onclick="executeReset()">🚀 명예의 전당 등록 & 리셋</button>
+    </div>
   </div>
 </div>
 
@@ -481,6 +531,7 @@ window.onload=()=>{
   loadToday();
   calcAll();
   renderStats();
+  renderHOF(); // 명예의 전당 로드
   syncFromCloud(); 
 };
 
@@ -498,13 +549,17 @@ function sw(tab){
   document.getElementById('pg-'+tab).classList.add('active');
   if(tab==='chart') renderCharts();
   if(tab==='history') renderHist();
-  if(tab==='settings') renderStats();
-  if(tab==='dashboard') calcAll();
+  if(tab==='settings') { renderStats(); renderHOF(); }
+  if(tab==='dashboard') { calcAll(); renderHOF(); }
 }
 
 // ─── STORAGE ───
 function getRecs(){try{return JSON.parse(localStorage.getItem(SK))||{};}catch{return{};}}
 function setRecs(r){localStorage.setItem(SK,JSON.stringify(r));}
+
+// 🚨 수익 기록 스토리지 분리 (삼성전자 전용)
+function getProfits(){try{return JSON.parse(localStorage.getItem(SK+'_profits'))||{cycle:1, records:[]};}catch{return{cycle:1, records:[]};}}
+function setProfits(p){localStorage.setItem(SK+'_profits',JSON.stringify(p));}
 
 function onDateChange(){
   const date=document.getElementById('recDate').value;
@@ -538,6 +593,86 @@ function resetNightSection(){
     btn.style.border='none';
     btn.style.cursor='pointer';
   }
+}
+
+// ─── 명예의 전당 & 리셋 로직 (삼성전자 버전) ───
+function promptResetCycle() {
+  document.getElementById('cycleProfitInput').value = '';
+  document.getElementById('resetModal').classList.add('open');
+}
+
+function closeResetMo(e) {
+  if(!e || e.target === document.getElementById('resetModal')) {
+    document.getElementById('resetModal').classList.remove('open');
+  }
+}
+
+function executeReset() {
+  const profitStr = document.getElementById('cycleProfitInput').value;
+  const profit = parseFloat(profitStr) || 0;
+  
+  if(profitStr === '') {
+    toast("⚠️ 수익금을 입력해주세요 (0이어도 입력)");
+    return;
+  }
+
+  const pData = getProfits();
+  const today = document.getElementById('recDate').value;
+  
+  pData.records.push({
+    date: today,
+    cycle: pData.cycle,
+    profit: profit
+  });
+  
+  pData.cycle += 1;
+  setProfits(pData);
+
+  document.getElementById('shares').value = 0;
+  document.getElementById('avgPrice').value = 0;
+  document.getElementById('tVal').value = 0;
+  
+  calcAll();
+  renderHOF();
+  closeResetMo();
+  sw('input'); 
+  
+  toast(`🎉 ${pData.cycle}회차 시작! 현황이 리셋되었습니다.`);
+}
+
+function renderHOF() {
+  const pData = getProfits();
+  
+  document.getElementById('hofCycle').textContent = `${pData.cycle}회차 진행중`;
+  document.getElementById('setCycleBadge').textContent = `${pData.cycle}회차`;
+
+  let total = 0;
+  let listHtml = '';
+  
+  if (pData.records.length === 0) {
+    listHtml = '<div style="color:var(--muted); text-align:center; padding:10px;">아직 졸업 기록이 없습니다.</div>';
+  } else {
+    const reversed = [...pData.records].reverse();
+    reversed.forEach(r => {
+      total += parseFloat(r.profit);
+      const isPlus = r.profit >= 0;
+      listHtml += `
+        <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid #1e2d45;">
+          <span style="color:var(--dim);">${r.date} <span style="color:#7ab8f5;font-weight:700;">[${r.cycle}회차]</span></span>
+          <span style="font-family:var(--fm); font-weight:700; color:${isPlus ? 'var(--buy)' : 'var(--sell)'}">${isPlus?'+':''}₩${Math.floor(r.profit).toLocaleString()}</span>
+        </div>
+      `;
+    });
+  }
+
+  const totalStr = (total >= 0 ? '+' : '') + '₩' + Math.floor(total).toLocaleString();
+  document.getElementById('hofTotalProfit').textContent = totalStr;
+  document.getElementById('hofTotalProfit').style.color = total >= 0 ? '#fff' : 'var(--sell)';
+  
+  document.getElementById('setTotalProfit').textContent = totalStr;
+  document.getElementById('setTotalProfit').style.color = total >= 0 ? '#fff' : 'var(--sell)';
+
+  document.getElementById('hofList').innerHTML = listHtml;
 }
 
 // ─── T값 히스토리 ───
@@ -796,11 +931,11 @@ function calcAll(){
     const finalPct = 1.10; // 🚨 최종매도 10%로 변경
     const fsp = avg * finalPct;
 
-    document.getElementById('pv_star_lbl').textContent='⭐ 별지점 (5%)'; // 🚨 텍스트 변경
+    document.getElementById('pv_star_lbl').textContent='⭐ 별지점 (5%)'; 
     document.getElementById('pv_star').textContent=avg>0?'₩'+Math.floor(starPoint).toLocaleString():'—';
     document.getElementById('pv_buy').textContent=bAmt>0?'₩'+Math.floor(bAmt).toLocaleString():'—';
 
-    document.getElementById('d_star_lbl').textContent='⭐ 별지점 (5%)'; // 🚨 텍스트 변경
+    document.getElementById('d_star_lbl').textContent='⭐ 별지점 (5%)'; 
     document.getElementById('d_star').textContent=avg>0?'₩'+Math.floor(starPoint).toLocaleString():'—';
     document.getElementById('d_t').textContent=T>0?T.toFixed(4)+'T':'—';
 
@@ -810,7 +945,7 @@ function calcAll(){
     else modeEl.innerHTML='<span style="color:#4cdd8a;">🟢 전반전</span>';
 
     document.getElementById('modeGuideFH').className='fh';
-    document.getElementById('modeGuideFH').innerHTML=`삼성전자 공격형: 별지점=<span>평단×1.05</span> · 최종매도=<span>평단×1.10</span>`; // 🚨 가이드 변경
+    document.getElementById('modeGuideFH').innerHTML=`삼성전자 공격형: 별지점=<span>평단×1.05</span> · 최종매도=<span>평단×1.10</span>`; 
     document.getElementById('modeGuide').innerHTML=!isBack
       ?'전반전: 1회매수금 절반을 <span>별지점(또는 현재가) 이하 매수</span> · 절반은 <span>평단 이하 매수</span>'
       :'후반전: 1회매수금 전체를 <span>별지점 이하 매수</span>';
@@ -837,7 +972,6 @@ function calcAll(){
     const modeEl=document.getElementById('d_mode');
     if (pct >= -20 && avg > 0) {
       modeEl.innerHTML='<span style="color:#4cdd8a;font-size:13px;line-height:1.2;">🟢 수익 -20% 돌파!<br>리버스모드 끄세요!</span>';
-      toast('🟢 -20% 회복! 리버스 모드를 끄고 일반모드로 복귀하세요!');
     } else {
       modeEl.innerHTML='<span style="color:#ffaa00;font-size:15px;">🔄 리버스 모드</span>';
     }
@@ -876,7 +1010,6 @@ function calcAll(){
       </tr>`;
   }
 
-  // 공통 UI 업데이트
   const pnlEl=document.getElementById('pv_pnl');
   pnlEl.textContent=pnlStr+(pctStr!=='—'?'  /  '+pctStr:'');
   pnlEl.style.color=pnlColor;
@@ -886,7 +1019,6 @@ function calcAll(){
   document.getElementById('d_pct').textContent=pctStr;
   document.getElementById('d_pct').style.color=pnlColor;
 
-  // 현황 업데이트 마감 데이터 우선
   if (_globalNewShares === null) {
       document.getElementById('d_shares').textContent=S>0?S+'주':'—';
       document.getElementById('d_avg').textContent=avg>0?'₩'+Math.floor(avg).toLocaleString():'—';
@@ -907,7 +1039,6 @@ function makeAddPrices(base,isFront,count){
   return prices;
 }
 
-// 매수표 그리기
 function buildBuyTable(bAmt,starPoint,avg,cur,isBack){
   const tbody=document.getElementById('buyBody');
   tbody.innerHTML='';
@@ -940,7 +1071,6 @@ function buildBuyTable(bAmt,starPoint,avg,cur,isBack){
   });
 }
 
-// ─── T값 자동계산 ───
 function initTRows(){
   document.getElementById('tCalcRows').innerHTML='';
   tRowCount=0; addTRow();
@@ -1088,7 +1218,6 @@ function applyNextT(){
   toast('✅ 체결 내역이 안전하게 저장되었습니다!');
 }
 
-// ─── 차트 ───
 function renderCharts(){
   const recs=getRecs();
   const dates=Object.keys(recs).sort();
@@ -1132,7 +1261,6 @@ function renderCharts(){
   chartAvg=new Chart(document.getElementById('chartAvg'),{type:'line',data:{labels,datasets:[{data:avgData,borderColor:'#f5c518',tension:0.4,pointRadius:3,fill:false,label:'평단'},{data:starData,borderColor:'#ff80d5',borderDash:[4,4],tension:0.4,pointRadius:3,fill:false,label:'별지점',borderWidth:1.5}]},options:{...base,plugins:{...base.plugins,legend:{display:true,labels:{color:'#7a8aa0',font:{size:12}}}}}});
 }
 
-// ─── HISTORY ───
 function renderHist(){
   const recs=getRecs();
   const q=(document.getElementById('histSearch').value||'').toLowerCase();
@@ -1163,7 +1291,6 @@ function renderHist(){
   });
 }
 
-// ─── STATS ───
 function renderStats(){
   const recs=getRecs();
   const dates=Object.keys(recs).sort();
@@ -1205,7 +1332,6 @@ function renderStats(){
   pc.innerHTML=pgHtml;
 }
 
-// ─── MODAL ───
 function openMo(date){
   const r=getRecs()[date];if(!r)return;
   moDate=date;
@@ -1228,12 +1354,13 @@ function loadFromHist(){if(!moDate)return;const r=getRecs()[moDate];fillForm(r);
 function delRecord(){if(!moDate)return;if(!confirm(`${moDate} 삭제?`))return;const r=getRecs();delete r[moDate];setRecs(r);closeMo();renderHist();toast('🗑️ 삭제됨');}
 function cDel(date){if(!confirm(`${date} 삭제?`))return;const r=getRecs();delete r[date];setRecs(r);renderHist();toast('🗑️ 삭제됨');}
 
-// ─── JSON ───
 function exportJSON(){
   const recs=getRecs();
-  if(!Object.keys(recs).length){toast('저장 기록 없음');return;}
+  const prof=getProfits(); 
+  const exportData = { records: recs, profits: prof };
+  if(!Object.keys(recs).length && prof.records.length === 0){toast('저장 기록 없음');return;}
   const a=document.createElement('a');
-  a.href=URL.createObjectURL(new Blob([JSON.stringify(recs,null,2)],{type:'application/json'}));
+  a.href=URL.createObjectURL(new Blob([JSON.stringify(exportData,null,2)],{type:'application/json'}));
   a.download=`삼성전자_무한매수_백업_${new Date().toISOString().slice(0,10)}.json`;
   a.click();toast('📤 JSON 내보내기 완료!');
 }
@@ -1244,17 +1371,22 @@ function importJSON(e){
   reader.onload=ev=>{
     try{
       const imported=JSON.parse(ev.target.result);
-      const merged={...getRecs(),...imported};
-      setRecs(merged);
-      renderTHist();loadToday();renderStats();
-      toast(`✅ ${Object.keys(imported).length}일치 가져오기 완료!`);
+      if(imported.records) {
+        const merged={...getRecs(),...imported.records};
+        setRecs(merged);
+        if(imported.profits) setProfits(imported.profits);
+      } else { 
+        const merged={...getRecs(),...imported};
+        setRecs(merged);
+      }
+      renderTHist();loadToday();renderStats();renderHOF();
+      toast(`✅ 데이터 가져오기 완료!`);
     }catch{toast('❌ 파일 형식이 올바르지 않아요');}
   };
   reader.readAsText(file);
   e.target.value='';
 }
 
-// ─── CSV ───
 function exportCSV(){
   const recs=getRecs();const dates=Object.keys(recs).sort();
   if(!dates.length){toast('저장 기록 없음');return;}
